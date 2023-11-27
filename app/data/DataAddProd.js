@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from "@react-native-community/netinfo";
 
 const STORAGE_KEY = '@save_productos'
-const database_name = 'CotzulBD.db';
+const database_name = 'CotzulBD4.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
@@ -69,7 +69,7 @@ export default function  DataAddProd(props) {
                 data = {posts}
                 keyExtractor={( id , index) => index.toString()}
                 onEndReachedThreshold={0.7}
-                renderItem={({ item }) => (<ListProducto producto={item} ArrayDatos={ArrayDatos} /> )} 
+                renderItem={({ item }) => (<ListProducto producto={item} ArrayDatos={ArrayDatos} tipocat={tipocat} /> )} 
                 ListFooterComponent={() => <View style={{flex:1,justifyContent: "center",alignItems: "center"}}><Text style={styles.finalproducto}>--- Fin de busqueda ---</Text></View>}
                 />
 
@@ -83,8 +83,8 @@ export default function  DataAddProd(props) {
 
 
 function ListProducto(props){
-    const {producto, ArrayDatos} = props;
-    const {pr_codigo,pr_codprod, pr_referencia, pr_familia, pr_nivel1, pr_nivel2, pr_pvp, pr_rutaimg, pr_stock, pr_arrayimg} = producto;
+    const {producto, ArrayDatos, tipocat} = props;
+    const {pr_codigo,pr_codprod, pr_referencia, pr_familia, pr_nivel1, pr_nivel2, pr_pvp, pr_rutaimg, pr_stock, pr_arrayimg, cb_codigo, nombcombo, imgcombo, total, desccombo} = producto;
     const [check, setCheck] = useState(false);
     
     const AgregaProducto = (check, pr_codigo) => {
@@ -103,26 +103,43 @@ function ListProducto(props){
     return (<TouchableOpacity >
                 <View style={styles.productoCardWrapper}>
                 <View style={styles.checkbox}>
-                    <CheckBox
+                {(tipocat!= 5)?(<CheckBox
                         checked={check}
                         onPress={()=> AgregaProducto(check, pr_codigo)}
                         
-                        />
+                        />):(<CheckBox
+                            checked={check}
+                            onPress={()=> AgregaProducto(check, cb_codigo)}
+                            
+                            />)}
+                    
                     </View>
-                <View style={styles.productoImage}>
+                    {(tipocat!= 5)?(<View style={styles.productoImage}>
                    
-                        <Image PlaceholderContent = {<ActivityIndicator color="fff" />}
-                        style={{width:100, height:100}}
-                        source={{uri: pr_rutaimg}}
-                        /> 
-                    
-                </View>
-                    
-                    <View style={styles.productoTexto}>
+                   <Image PlaceholderContent = {<ActivityIndicator color="fff" />}
+                   style={{width:100, height:100}}
+                   source={{uri: pr_rutaimg}}
+                   /> 
+               
+           </View>):(<View style={styles.productoImage}>
+                   
+                   <Image PlaceholderContent = {<ActivityIndicator color="fff" />}
+                   style={{width:100, height:100}}
+                   source={{uri: imgcombo}}
+                   /> 
+               
+           </View>)}
+                
+                    {(tipocat!= 5)?(<View style={styles.productoTexto}>
                         <Text style={styles.productoReferencia}>{pr_referencia}</Text>
                         <Text style={styles.productoCodigo}>{pr_codprod}</Text>
                         <Text style={styles.productoCodigo}>cant: {pr_stock}</Text>
-                    </View>
+                    </View>):(<View style={styles.productoTexto}>
+                        <Text style={styles.productoReferencia}>{nombcombo}</Text>
+                        <Text style={styles.productoCodigo}>{desccombo}</Text>
+                        <Text style={styles.productoCodigo}>$ {total}</Text>
+                    </View>)}
+                    
                     
                 </View>
                 </TouchableOpacity>);

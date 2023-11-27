@@ -2,15 +2,14 @@ import React,{useState, useEffect, useContext} from "react";
 import {View, Text, Image,StyleSheet, Alert} from "react-native";
 import { Input, Icon, Button} from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import {useNavigation} from "@react-navigation/native"
 import LoginForm from "../navegations/LoginForm";
 import * as SQLite from 'expo-sqlite';
 import { AuthContext } from "../components/Context"
 import NetInfo from "@react-native-community/netinfo";
-
+import ModalConfirma from './ModalConfirm';
 const STORAGE_KEY = '@save_data'
 
-const database_name = 'CotzulBD.db';
+const database_name = 'CotzulBD4.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
@@ -18,10 +17,11 @@ const database_size = 200000;
 export default function Perfil(){
     
     const [dataUser, setdataUser] = useState(defaultValueUser());
-    const navigation = useNavigation();
     const [user, setUser] = useState(true);
     const {signOut, signUp} = React.useContext(AuthContext);
     const [internet, setInternet] = useState(true);
+
+    
 
    
     
@@ -66,10 +66,20 @@ export default function Perfil(){
         reviewInternet();
         if(internet){
             signUp();
+
         }else{
             Alert.alert("Su dispositivo no cuenta con internet");
         }
    }
+
+
+   const openModal = () =>{
+    onLoad();
+  }
+
+  
+
+
 
 
     return(<>
@@ -88,13 +98,14 @@ export default function Perfil(){
             buttonStyle = {styles.btnLogin}
             onPress= {onSubmit}
         />
-
-        <Button
+        <ModalConfirma openModal={openModal}></ModalConfirma>
+        {/*<Button
             title="Recargar Datos"
             containerStyle={styles.btnContainerLogin}
             buttonStyle = {styles.btnLogin}
-            onPress= {onLoad}
-        />
+            onPress= {openModal}
+    />*/}
+        <Text style={styles.txtusuario}>Version App: 1.0.3</Text>
     </View>
         
         </>

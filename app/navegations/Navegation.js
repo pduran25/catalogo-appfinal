@@ -78,10 +78,7 @@ export default function Navigation(props){
              (userToken === 'keyrubikload') ? <CargarDatos toastRef={toastRef} /> : 
             <Tab.Navigator
             initialRouteName="restaurants"
-            tabBarOptions={{
-              inactiveTintColor: "#646464",
-              activeTintColor: "#00a680",
-            }}
+          
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ color }) => screenOptions(route, color),
               })}
@@ -89,20 +86,20 @@ export default function Navigation(props){
                 <Tab.Screen 
                     name="productos" 
                     component={ProductosStack}
-                    options={{title: "Productos"}} 
+                    options={{headerShown: false}}
                     />
                     <Tab.Screen 
                     name="catalogos" 
                     component={CatalogoStack}
-                    options={{title: "Catálogo"}}  />
+                    options={{headerShown: false}} />
                     <Tab.Screen 
                     name="clientes" 
                     component={ClienteStack}
-                    options={{title: "Clientes"}}  />
+                    options={{headerShown: false}}  />
                     <Tab.Screen 
                     name="perfil" 
                     component={PerfilStack}
-                    options={{title: "Perfil"}}  />
+                    options={{headerShown: false}}  />
             </Tab.Navigator>}
                 </NavigationContainer>
                 </AuthContext.Provider>

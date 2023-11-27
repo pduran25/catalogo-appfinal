@@ -4,7 +4,6 @@ import { Input, Icon, Button} from 'react-native-elements';
 import {isEmpty} from "lodash";
 import axios from 'axios'
 import {NavigationContainer} from "@react-navigation/native";
-import Navigation from "../navegations/Navegation";
 import CargarDatos from "../navegations/CargarDatos";
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { AuthContext } from "../components/Context"
@@ -12,6 +11,13 @@ import NetInfo from "@react-native-community/netinfo";
 
 const STORAGE_KEY = '@save_data'
 const STORAGE_DB = '@login_data'
+
+const key_check1 = '@check1'
+const key_check2 = '@check2'
+const key_check3 = '@check3'
+const key_check4 = '@check4'
+const key_check5 = '@check5'
+const key_check6 = '@check6'
 
 
 export default function LoginForm(props) {
@@ -41,7 +47,22 @@ export default function LoginForm(props) {
 
     const setDB = async (value) => {
         try {
+            UpdateChecks()
             await AsyncStorage.setItem(STORAGE_DB, value)
+            
+          } catch(e) {
+             console.log(e)
+          }
+    }
+
+    const UpdateChecks = async () => {
+        try {
+            await AsyncStorage.setItem(key_check1, false)
+            await AsyncStorage.setItem(key_check2, false)
+            await AsyncStorage.setItem(key_check3, false)
+            await AsyncStorage.setItem(key_check4, false)
+            await AsyncStorage.setItem(key_check5, false)
+            await AsyncStorage.setItem(key_check6, false)
           } catch(e) {
              console.log(e)
           }

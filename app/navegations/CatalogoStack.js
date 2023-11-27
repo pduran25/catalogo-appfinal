@@ -3,6 +3,7 @@ import {createStackNavigator} from "@react-navigation/stack";
 import Catalogo from "../screens/Catalogo";
 import SCatalogo from "../productos/SCatalogo";
 import Producto from "../productos/Producto";
+import Combo from "../productos/Combo";
 
 const Stack = createStackNavigator();
 export default function CatalogoStack(){
@@ -20,6 +21,10 @@ export default function CatalogoStack(){
             name="producto"
             component={Producto}
             options={{title:"Detalle producto"}} />
+            <Stack.Screen 
+            name="combo"
+            component={Combo}
+            options={{title:"Detalle Combo"}} />
         </Stack.Navigator>
     );
 }

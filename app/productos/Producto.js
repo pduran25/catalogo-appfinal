@@ -5,12 +5,12 @@ import axios from 'axios'
 import Carousel from "../components/Carousel"
 import * as SQLite from 'expo-sqlite';
 import utf8 from 'utf8'
-import RNPickerSelect from "react-native-picker-select";
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Table, TableWrapper, Row, Rows, Col  } from 'react-native-table-component';
+import Picker from '@ouroboros/react-native-picker';
 
 const screenWidth = Dimensions.get("window").width;
-const database_name = 'CotzulBD.db';
+const database_name = 'CotzulBD4.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
@@ -260,7 +260,7 @@ export default function Producto(props) {
             <View style={styles.viewdetalle}>
                         <Text style={styles.productoReferencia}>{prod.pr_referencia}</Text>
                         <Text style={styles.productoCodigo}>{prod.pr_codprod}</Text>
-                        <Text style={styles.productoConf}>{prod.pr_familia}</Text>
+                        <Text style={styles.productoConf}>{prod.pr_marca}</Text>
                         <Text style={styles.productoConf}>{prod.pr_nivel1}</Text>
                         <Text style={styles.productoConf}>{prod.pr_nivel2}</Text>
             </View>
@@ -277,7 +277,7 @@ export default function Producto(props) {
                 <Text style={styles.labelcorta}>Stock: {prod.pr_stock}</Text>
         </View>
         <View style={styles.descripcion}>
-        <Text style={styles.labelcorta}>Tipo Precio: <RNPickerSelect
+        <Text style={styles.labelcorta}>Tipo Precio: {/*<RNPickerSelect
                 useNativeAndroidPickerStyle={false}
                 style={pickerStyle}
                 onValueChange={(tprecio) => setTprecio(tprecio)}
@@ -289,7 +289,19 @@ export default function Producto(props) {
                     { label: "Público", value: 4 },
                     { label: "Personalizado", value: 6 }
                 ]}
-            /></Text>
+            />*/}</Text><Picker
+              onChanged={setTprecio}
+              options={[
+                {value: 0, text: 'Selecccionar'},
+                {value: 1, text: 'Subdistribuidor'},
+                  {value: 2, text: 'Contado'},
+                  {value: 3, text: 'Credito'},
+                  {value: 4, text: 'Público'},
+                  {value: 6, text: 'Personalizado'},
+              ]}
+              style={{borderWidth: 1, width:150, borderColor: '#a7a7a7', borderRadius: 5, marginTop:5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={tprecio}
+          />
             <View style={styles.containertext}>
             {
                 (visible) ? (
@@ -306,7 +318,7 @@ export default function Producto(props) {
             }
              </View>
         
-             <Text style={styles.labelcorta}>Imagen a presentar: <RNPickerSelect
+             <Text style={styles.labelcorta}>Imagen a presentar: {/*<RNPickerSelect
                 useNativeAndroidPickerStyle={false}
                 style={pickerStyle}
                 onValueChange={(value) => setImg(value)}
@@ -314,7 +326,16 @@ export default function Producto(props) {
                 items={[
                     { label: "Personalizada", value: 1 }
                 ]}
-            /></Text>
+            />*/}</Text>
+            <Picker
+              onChanged={setImg}
+              options={[
+                {value: 0, text: 'Catálogo'},
+                {value: 1, text: 'Personalizada'},
+              ]}
+              style={{borderWidth: 1, width:150, borderColor: '#a7a7a7', borderRadius: 5, marginTop:5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={img}
+          />
         </View>
         <View style={styles.container}>
         <Table borderStyle={{borderWidth: 1}}>

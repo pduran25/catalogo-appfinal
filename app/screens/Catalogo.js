@@ -5,10 +5,10 @@ import Feather from 'react-native-vector-icons/Feather';
 import DataCatalogo from '../data/DataCatalogo'
 import { SearchBar, ListItem, Icon, CheckBox } from "react-native-elements"
 import Modal from "react-native-modal";
-import RNPickerSelect from "react-native-picker-select";
 import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useNavigation } from "@react-navigation/native"
+import Picker from '@ouroboros/react-native-picker';
 
 export default function Catalogo() {
 
@@ -19,7 +19,7 @@ export default function Catalogo() {
     const STORAGE_DB = '@login_data'
     const [dataUser, setdataUser] = useState(null);
 
-    const database_name = 'CotzulBD.db';
+    const database_name = 'CotzulBD4.db';
     const database_version = '1.0';
     const database_displayname = 'CotzulBD';
     const database_size = 200000;
@@ -61,22 +61,43 @@ export default function Catalogo() {
     }, []);
 
 
-    useEffect(() => {
-        if (codigofin != 0) {
-            console.log("el codigo registrado es: " + codigofin)
-            db.transaction((tx) => {
-                tx.executeSql(
-                    'INSERT INTO Catalogo(ct_codigo, ct_codcliente, ct_nomcliente, ct_nomcata, ct_tipocli, ct_fecha, ct_codvendedor, ct_cantprod, ct_cantpromo, ct_cantliqui, ct_cantprox) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
-                    [codigofin, tcliente, nomcliente, nombreCata, 1, getCurrentDate(), dataUser.us_idvendedor, 0, 0, 0, 0],
-                    (tx, results) => {
-                        console.log("ingresado con exito")
-                        handleModal()
-                        navigation.navigate("scatalogo", { ct_codigo: codigofin, ct_nomcata: nombreCata, ct_nomcliente: nomcliente, ct_codcliente: tcliente });
-                    }
-                );
-            });
-        }
-    }, [codigofin])
+
+
+    const registrarCatalogo = () => {
+        var fechaact = getCurrentDate();
+        db.transaction((tx) => {
+            tx.executeSql(
+                'INSERT INTO Catalogo( ct_codcliente, ct_nomcliente, ct_nomcata, ct_tipocli, ct_fecha, ct_codvendedor, ct_cantprod, ct_cantpromo, ct_cantliqui, ct_cantprox) VALUES(?,?,?,?,?,?,?,?,?,?)',
+                [tcliente, nomcliente, nombreCata, 1, fechaact, dataUser.us_idvendedor, 0, 0, 0, 0],
+                (tx, results) => {
+                    console.log("ingresado con exito registrar")
+                    handleModal()
+                    tx.executeSql(
+                        'SELECT ct_codigo as codigo, ct_idcata as idcata FROM Catalogo WHERE ct_codcliente = ? AND ct_nomcliente = ? AND ct_fecha = ?',
+                        [tcliente, nomcliente, fechaact],
+                        (tx, results) => {
+                         // console.log("se actualizo correctemente cat: "+ idcata);
+                          var len = results.rows.length;
+                          console.log("cantidad de catproducto registrados : " + len);
+                          for (let i = 0; i < len; i++) {
+                                let row = results.rows.item(i);
+                                var code = row.codigo;
+                                var idcata = row.idcata;
+                                console.log("idcata: "+idcata);
+                                navigation.navigate("scatalogo", { ct_codigo: code, ct_nomcata: nombreCata, ct_nomcliente: nomcliente, ct_codcliente: tcliente, ct_idcata: idcata });
+                          }
+                          
+                        },
+                        (tx, error) => {
+                          // Error en la segunda consulta
+                          console.log("error registro catalogo: "+error)
+                        }
+                      );
+                    
+                }
+            );
+        });
+    }
 
     const getCurrentDate = () => {
 
@@ -92,7 +113,7 @@ export default function Catalogo() {
     function findLinkByValue(value) {
         for (const item of Clientes) {
             if (item.value === value) {
-                return item.label;
+                return item.text;
             }
         }
     }
@@ -124,9 +145,7 @@ export default function Catalogo() {
     const crearCatalogo = () => {
         console.log("creando catalogo")
         setBtnvisible(!btnvisible)
-        insertCatalogo()
-
-
+       registrarCatalogo()
     }
 
 
@@ -144,8 +163,9 @@ export default function Catalogo() {
                 [],
                 (tx, results) => {
                     var temp = [];
+                    temp.push({ value: 0, text: "SELECCIONAR CLIENTE"})
                     for (let i = 0; i < results.rows.length; ++i) {
-                        temp.push({ label: results.rows.item(i).cl_cliente, value: results.rows.item(i).cl_codigo })
+                        temp.push({ value: results.rows.item(i).cl_codigo, text: results.rows.item(i).cl_cliente})
                     }
                     console.log("se encontro clientes");
                     setClientes(temp);
@@ -167,7 +187,6 @@ export default function Catalogo() {
             console.log(jsonResponse)
             jsonResponse?.catalogoid.map((value, index) => {
                 setCodigofin(value.idcodigo)
-
             });
 
         } catch (error) {
@@ -196,10 +215,8 @@ export default function Catalogo() {
                 </View>
             </View>
             <Modal isVisible={isModalVisible}>
-                <View style={{
-                    flex: 1, backgroundColor: "white",
-                    alignItems: "center", width: "100%", height: "50%"
-                }}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
                     <Icon
                         reverse
                         type="material-community"
@@ -222,14 +239,14 @@ export default function Catalogo() {
 
                     />
 
-                    <RNPickerSelect
-                        useNativeAndroidPickerStyle={false}
-                        style={pickerStyle}
-                        onValueChange={(tcliente) => setTcliente(tcliente)}
-                        placeholder={{ label: "Seleccionar el cliente", value: 0 }}
-                        items={Clientes}
+                  
 
-                    />
+            <Picker
+              onChanged={setTcliente}
+              options={Clientes}
+              style={{borderWidth: 1, width:250, borderColor: '#a7a7a7', borderRadius: 5, marginTop:5, padding: 5, backgroundColor: "#6f4993", color: 'white', alignItems: 'center'}}
+              value={tcliente}
+          />
 
                     {(btnvisible) ?
                         <Button
@@ -244,7 +261,7 @@ export default function Catalogo() {
                         </View>
                     }
                 </View>
-
+                </View>
 
             </Modal>
             <Button
@@ -275,6 +292,17 @@ const styles = StyleSheet.create({
     titlesWrapper: {
         marginTop: 10,
     },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+    }, 
     titlesSubtitle2: {
         // fontFamily: 
         marginTop: 10,
@@ -331,12 +359,9 @@ const styles = StyleSheet.create({
     btnContainer: {
         position: "relative",
         alignItems: "center",
-        bottom: 10,
-        right: 10,
         shadowColor: "black",
         shadowOffset: { width: 2, height: 2 },
         zIndex: 15,
-        margin: 20,
     },
     btnContainerLogin: {
         marginTop: 10,
@@ -380,7 +405,7 @@ const styles = StyleSheet.create({
 
 const pickerStyle = {
     inputIOS: {
-        width: "100%",
+        width: "90%",
         color: 'white',
         padding: 10,
         margin: 10,
