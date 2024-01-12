@@ -156,7 +156,7 @@ class ModalConfirm extends Component {
           style={[styles.button, styles.buttonOpen]}
           onPress={() => this.setModalVisible(true)}
         >
-          <Text style={styles.textStyle1}>Sincronizar Datos</Text>
+          <Text style={styles.textStyle1}>Sincronización Segmentada</Text>
         </Pressable>
       </View>
     );

@@ -10,7 +10,7 @@ import NetInfo from "@react-native-community/netinfo";
 
 
 const STORAGE_KEY = '@save_productos'
-const database_name = 'CotzulBD4.db';
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
@@ -54,6 +54,7 @@ export default function  DataExtra(props) {
             (tx, results) => {
                 var temp = [];
                     console.log(results)
+                    console.log("Cantidad de productos encontrados: "+results.rows.length);
                     for (let i = 0; i < results.rows.length; ++i)
                         temp.push(results.rows.item(i));
                 setPosts(temp);

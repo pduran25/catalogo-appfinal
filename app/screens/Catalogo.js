@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TextInput, ActivityIndicator } from "react-native";
+import React, { useState, useEffect, useCallback } from 'react'
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TextInput, RefreshControl, ActivityIndicator } from "react-native";
 import { colors, Button } from "react-native-elements";
 import Feather from 'react-native-vector-icons/Feather';
 import DataCatalogo from '../data/DataCatalogo'
@@ -9,6 +9,7 @@ import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useNavigation } from "@react-navigation/native"
 import Picker from '@ouroboros/react-native-picker';
+import ActualizacionBolita from './Actualizacionbolita';
 
 export default function Catalogo() {
 
@@ -19,7 +20,7 @@ export default function Catalogo() {
     const STORAGE_DB = '@login_data'
     const [dataUser, setdataUser] = useState(null);
 
-    const database_name = 'CotzulBD4.db';
+    const database_name = 'CotzulBD6.db';
     const database_version = '1.0';
     const database_displayname = 'CotzulBD';
     const database_size = 200000;
@@ -35,7 +36,8 @@ export default function Catalogo() {
     const navigation = useNavigation();
     const [btnvisible, setBtnvisible] = useState(true);
     const [textoespera, setTextoespera] = useState("Por favor espere, registrando catalogo...")
-
+    const [estaActualizada, setEstaActualizada] = useState(0);
+    const [refreshing, setRefreshing] = useState(false);
 
     const getDataUser = async () => {
         try {
@@ -59,6 +61,15 @@ export default function Catalogo() {
         }
 
     }, []);
+
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+    }, []);
+
+    const refrescar = () =>  {
+        setRefreshing(true);
+        
+    }
 
 
 
@@ -84,7 +95,7 @@ export default function Catalogo() {
                                 var code = row.codigo;
                                 var idcata = row.idcata;
                                 console.log("idcata: "+idcata);
-                                navigation.navigate("scatalogo", { ct_codigo: code, ct_nomcata: nombreCata, ct_nomcliente: nomcliente, ct_codcliente: tcliente, ct_idcata: idcata });
+                                navigation.navigate("scatalogo", { ct_codigo: code, ct_nomcata: nombreCata, ct_nomcliente: nomcliente, ct_codcliente: tcliente, ct_idcata: idcata, refrescar: refrescar });
                           }
                           
                         },
@@ -198,7 +209,10 @@ export default function Catalogo() {
 
     return (
 
-        <View style={styles.container}>
+        <ScrollView style={styles.container} refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+             {/*<ActualizacionBolita actualizada={estaActualizada} />*/}
             <View style={styles.titlesWrapper}>
                 <Text style={styles.titlesSubtitle}>Catálogos</Text>
             </View>
@@ -235,7 +249,7 @@ export default function Catalogo() {
                         style={styles.input}
                         onChangeText={onChangeText}
                         value={nombreCata}
-                        keyboardType="text"
+                        keyboardType="default"
 
                     />
 
@@ -271,16 +285,16 @@ export default function Catalogo() {
                 onPress={handleModal}
             />
             {/*Familias*/}
-            <ScrollView style={styles.scrollview}>
+            <View style={styles.scrollview}>
                 <View style={styles.productoWrapper}>
-                    <DataCatalogo texto={search} />
+                    <DataCatalogo refreshing={refreshing} setRefreshing={setRefreshing} texto={search} />
 
                 </View>
 
 
-            </ScrollView>
+            </View>
 
-        </View>
+        </ScrollView>
     );
 }
 
@@ -313,6 +327,7 @@ const styles = StyleSheet.create({
         // fontFamily: 
         fontSize: 20,
         color: '#9462c1',
+        fontWeight: 'bold'
     },
     titlesSubtitle1: {
         // fontFamily: 

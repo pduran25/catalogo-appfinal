@@ -6,7 +6,7 @@ import {locationsRef} from "../utils/firebase"
 import {useNavigation} from "@react-navigation/native"
 import * as SQLite from 'expo-sqlite';
 
-const database_name = 'CotzulBD4.db';
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
@@ -110,8 +110,6 @@ const styles = StyleSheet.create({
         paddingTop: 10,
         paddingLeft: 10,
         paddingBottom: 0,
-        marginLeft:10,
-        marginRight:10,
         marginTop:10,
         height: 120,
         flexDirection: 'row',

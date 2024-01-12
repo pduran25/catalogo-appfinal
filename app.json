@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cotzul Catalogo",
     "slug": "cotzul-catalogo",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "jsEngine": "hermes",
@@ -26,7 +26,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "versionCode": 3,
+      "versionCode": 4,
       "package": "com.pedroduran25.catalogoappvendedores"
     },
     "web": {

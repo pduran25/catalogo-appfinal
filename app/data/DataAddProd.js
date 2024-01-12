@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from "@react-native-community/netinfo";
 
 const STORAGE_KEY = '@save_productos'
-const database_name = 'CotzulBD4.db';
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;

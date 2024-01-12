@@ -9,14 +9,14 @@ import Modal from "react-native-modal";
 
 
 const STORAGE_KEY = '@save_productos'
-const database_name = 'CotzulBD4.db';
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
 
 
 export default function DataCatalogo(props) {
-    const {texto} = props;
+    const {texto, refreshing, setRefreshing} = props;
     const [imageFirebase, setImage] = useState("")
     const [isLoading, setLoading] = useState(false)
     const navigation = useNavigation();
@@ -53,10 +53,16 @@ export default function DataCatalogo(props) {
         });
     };
 
-    
+    useEffect(() => {
+        if(refreshing){
+            abrirtablaCatalogo();
+            setRefreshing(false);
+        }
+            
+    }, [refreshing]);
+
 
     useEffect(() => {
-       
         abrirtablaCatalogo();
     }, [texto]);
 
@@ -104,7 +110,7 @@ function ListCatalogo(props){
 
     const goCatalogo = () =>{
         console.log("Detalle Catalogo");
-        console.log("ct_idcata: "+ ct_idcata);
+        console.log("carga usuario ct_idcata: "+ ct_idcata);
         navigation.navigate("scatalogo",{ct_codigo,ct_nomcata, ct_nomcliente, ct_codcliente, ct_idcata}); 
     }
 

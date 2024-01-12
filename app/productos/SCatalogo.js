@@ -8,16 +8,18 @@ import DataAddProd from '../data/DataAddProd'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Picker from '@ouroboros/react-native-picker';
 import { async } from '@firebase/util';
+import ModalCabeceras from '../screens/ModalCabeceras';
+import { BackHandler } from 'react-native';
 
 
-const database_name = 'CotzulBD4.db';
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
 
 export default function SCatalogo(props) {
     const {navigation, route} = props;
-    const {ct_codigo,ct_nomcata, ct_nomcliente, ct_codcliente, ct_idcata} = route.params;
+    const {ct_codigo,ct_nomcata, ct_nomcliente, ct_codcliente, ct_idcata, refrescar} = route.params;
     const [posts, setPosts] = useState([])
     const [tprecio, setTprecio] = useState(0);
     const [precio, setPrecio] = useState("-");
@@ -31,6 +33,7 @@ export default function SCatalogo(props) {
     const [codigoprom, setCodigoprom] = useState(0);
     const [codigoliqui, setCodigoliqui] = useState(0);
     const [codigocombo, setCodigocombo] = useState(0);
+    const [codigocabecera, setCodigocabecera] = useState(0);
     const [codigocat, setCodigocat] = useState(0);
     const [arraydata, setArraydata] = useState([]);
     const [sql2, setSql2] = useState("");
@@ -57,13 +60,19 @@ export default function SCatalogo(props) {
     const [cntr, setCntr] = useState(-1);
     const [cntl, setCntl] = useState(-1);
     const [cntc, setCntc] = useState(-1);
+
+    const [cntcp, setCntcp] = useState(-1);
+
     const [nombrecliente, setNombreCliente] = useState(0);
     const STORAGE_KEY = '@save_data'
     const STORAGE_DB = '@login_data'
     const [contcheck, setContcheck] = useState(0);
     const [idcatalogo, setidcatalogo] = useState(0);
     const [codproductos, setcodproductos] = useState("");
-    const [modificado, setModificado] = useState(0);
+    const [codprodpromo, setcodprodpromo] = useState("");
+    const [codprodliqui, setcodprodliqui] = useState("");
+    const [codcombo, setcodcombo] = useState("");
+    const [modificado, setModificado] = useState(1);
     
 
     var checkval = 0;
@@ -84,14 +93,27 @@ export default function SCatalogo(props) {
         }
     }
 
+    
+    
+     
+
+     
+      
+
     useEffect(() => {
-        console.log("carga usuario")
+        console.log("carga usuario:"+ct_idcata+" valor modificado: "+modificado);
         if (dataUser == null) {
             console.log("entra por primera ves")
+            console.log("carga usuario: por primera ves");
             getDataUser();
             cargarDatosCatalogo();
         }
         setidcatalogo(ct_idcata);
+        // Eliminar cualquier parámetro personalizado al desmontar el componente (opcional)
+        return () => {
+            console.log("probando que se regreso");
+            refrescar();
+        };
     }, []);
 
     const abrirtablaCatProd = async() => {
@@ -116,14 +138,21 @@ export default function SCatalogo(props) {
                   for (let i = 0; i < len; i++) {
                     let row = results.rows.item(i);
                     let ct_modprod = row.ct_modprod;
+                    console.log("modprod: "+ ct_modprod);
                     let ct_modprom = row.ct_modprom;
+                    console.log("modprom: "+ ct_modprom);
                     let ct_modliqui = row.ct_modliqui;
+                    console.log("modliqui: "+ ct_modliqui);
                     let ct_modxllegar = row.ct_modxllegar;
+                    console.log("modxllegar: "+ ct_modxllegar);
                     let ct_modcombo = row.ct_modcombo;
-                    let ct_total = ct_modprod + ct_modprom + ct_modliqui + ct_modxllegar + ct_modcombo;
+                    console.log("modcombo: "+ ct_modcombo);
+                    let ct_modcabecera = row.ct_modcabecera;
+                    console.log("modcabecera: "+ ct_modcabecera);
+                    let ct_total = ct_modprod + ct_modprom + ct_modliqui + ct_modxllegar + ct_modcombo + ct_modcabecera;
                     console.log("catalogo de productos modificado: "+ ct_total);
                     if(ct_total>0)
-                      setModificado(1) 
+                      setModificado(0) 
 
                   }
                 },(tx, error) => {
@@ -361,6 +390,8 @@ export default function SCatalogo(props) {
         var contl = 0;
         var dtcombo = "";
         var contc = 0;
+        var contcp = 0;
+        var dtcabecera = "";
 
         db.transaction((tx) => {
             if(analizar == 1){
@@ -377,10 +408,12 @@ export default function SCatalogo(props) {
                             dtproductos = dtproductos + results.rows.item(i).cd_idproducto;
                             contp++;
                         }
+                        console.log(dtproductos);
                             
                             setCodigoprod(dtproductos);
                             console.log("el numero inicial: "+ cntp+ "numero final: "+ contp);
                             setCntp(contp);
+                            
                             
 
                         }
@@ -450,6 +483,28 @@ export default function SCatalogo(props) {
                         }
                     );
             }else if(analizar == 5){
+                
+                console.log("INSERT INTO ca_cabxcat(cx_idcatalogo, cx_tipo, cx_cabecera) VALUES (?, ?, ?)");
+                tx.executeSql(
+                    "SELECT cx_tipo, cx_cabecera FROM ca_cabxcat WHERE cx_idcatalogo = ?",
+                    [ct_idcata],
+                    (tx, results) => {
+                        console.log("manejo de cabeceras: "+results.rows.length);
+                        for (let i = 0; i < results.rows.length; ++i){
+                            if(contcp != 0)
+                                 dtcabecera = dtcabecera + "*";
+                                 dtcabecera = dtcabecera + results.rows.item(i).cx_tipo + "-" + results.rows.item(i).cx_cabecera;
+                                 contcp++;
+                        }
+                        console.log("cabecera--: "+dtcabecera);
+                        
+                        setCodigocabecera(dtcabecera);  
+                        setCntcp(contcp);
+                        
+
+                        }
+                    );
+            }else if(analizar == 6){
                 subirCatalogoaNube();
 
             }
@@ -458,98 +513,13 @@ export default function SCatalogo(props) {
 
     }
 
-   /* const cargaProductos = async () => {
-        db = SQLite.openDatabase(
-            database_name,
-            database_version,
-            database_displayname,
-            database_size,
-        ); 
-    
-        db.transaction((tx) => {
-
-            if(isChecked1){
-                console.log("probando ingreso:");
-                tx.executeSql(
-                    "SELECT cd_idproducto FROM Catproducto WHERE cd_idcatalogo = ?",
-                    [ct_codigo],
-                    (tx, results) => {
-                        console.log("si registro el producto: "+results.rows.length);
-                        var dtproductos = "";
-                        var contp = 0;
-                        for (let i = 0; i < results.rows.length; ++i){
-                            if(contp != 0)
-                                dtproductos = dtproductos + "*";
-                            dtproductos = dtproductos + results.rows.item(i).cd_idproducto;
-                            contp++;
-                        }
-                        console.log("dtproductos: "+ dtproductos+ "valor de conteo: "+contp);
-                        setDatap(dtproductos);
-                        setCodigoprod(dtproductos);
-                       // setCntp(contp);
-                        }
-                    );
-            }
-                
-           
-            if(isChecked2){
-                tx.executeSql(
-                    "SELECT ch_idproducto FROM CatPromociones WHERE ch_idcatalogo = ?",
-                    [ct_codigo],
-                    (tx, results) => {
-                        console.log("si registro el promociones: "+results.rows.length);
-                        var dtpromo = "";
-                        var contr = 0;
-                        for (let i = 0; i < results.rows.length; ++i){
-                                if(contr != 0)
-                                     dtpromo = dtpromo + "*";
-                            dtpromo = dtpromo + results.rows.item(i).ch_idproducto;
-                            contr++;
-                        }
-                        setDatar(dtpromo);
-                        setCntr(contr);  
-                        setCodigoprom(dtpromo);
-                        }
-                    );
-            }
-
-            if(isChecked3){
-                tx.executeSql(
-                    "SELECT cl_idproducto FROM CatLiquidaciones WHERE cl_idcatalogo = ?",
-                    [ct_codigo],
-                    (tx, results) => {
-                        console.log("si registro el liquidaciones: "+results.rows.length);
-                        var dtliqui = "";
-                        var contl = 0;
-                        for (let i = 0; i < results.rows.length; ++i){
-                            if(contl != 0)
-                                 dtliqui = dtliqui + "*";
-                            dtliqui = dtliqui + results.rows.item(i).cl_idproducto;
-                            contl++;
-                        }
-                        setDatal(dtliqui); 
-                        setCntl(contl);  
-                        setCodigoliqui(dtliqui);  
-                        }
-                    );
-            }
-
-
-           
-        });
-
-        
-        
-    }
-*/
-
 
 
     const subirCatalogoaNube = async () => {
         try {
-            console.log("https://app.cotzul.com/Catalogo/php/conect/db_insertCatalogoComplet.php?idcliente="+ct_codcliente+"&nomcliente="+ct_nomcliente+"&nomcata="+ct_nomcata+"&codvendedor="+dataUser.us_idvendedor+"&idprodcata="+codigoprod+"&idprodpromo="+codigoprom+"&idprodliqui="+codigoliqui+"&idcombo="+codigocombo);
+            console.log("https://app.cotzul.com/Catalogo/php/conect/db_insertCatalogoComplet.php?idcliente="+ct_codcliente+"&nomcliente="+ct_nomcliente+"&nomcata="+ct_nomcata+"&codvendedor="+dataUser.us_idvendedor+"&idprodcata="+codigoprod+"&idprodpromo="+codigoprom+"&idprodliqui="+codigoliqui+"&idcombo="+codigocombo+"&cabeceras="+codigocabecera);
             const response = await fetch(
-              "https://app.cotzul.com/Catalogo/php/conect/db_insertCatalogoComplet.php?idcliente="+ct_codcliente+"&nomcliente="+ct_nomcliente+"&nomcata="+ct_nomcata+"&codvendedor="+dataUser.us_idvendedor+"&idprodcata="+codigoprod+"&idprodpromo="+codigoprom+"&idprodliqui="+codigoliqui+"&idcombo="+codigocombo
+              "https://app.cotzul.com/Catalogo/php/conect/db_insertCatalogoComplet.php?idcliente="+ct_codcliente+"&nomcliente="+ct_nomcliente+"&nomcata="+ct_nomcata+"&codvendedor="+dataUser.us_idvendedor+"&idprodcata="+codigoprod+"&idprodpromo="+codigoprom+"&idprodliqui="+codigoliqui+"&idcombo="+codigocombo+"&cabeceras="+codigocabecera
             );
             const jsonResponse = await response.json();
             console.log(jsonResponse)
@@ -558,6 +528,15 @@ export default function SCatalogo(props) {
                setidcatalogo(value.idcatalogo);
                console.log("valor2: "+value.codproductos);
                 setcodproductos(value.codproductos);
+                setcodprodpromo(value.codprodpromo);
+                setcodprodliqui(value.codprodliqui);
+                setcodcombo(value.codcombo);
+                setModificado(1);
+                setCntc(-1);
+                setCntl(-1);
+                setCntp(-1);
+                setCntr(-1);
+                setCntcp(-1);
             });
 
           } catch (error) {
@@ -567,7 +546,13 @@ export default function SCatalogo(props) {
     }
 
     useEffect(() => {
-      if(idcatalogo != 0){
+      if(idcatalogo > 0 && idcatalogo != null){
+        db = SQLite.openDatabase(
+            database_name,
+            database_version,
+            database_displayname,
+            database_size,
+        ); 
         db.transaction((tx) => {
 
             tx.executeSql(
@@ -583,30 +568,195 @@ export default function SCatalogo(props) {
 
     useEffect(() => {
         if(codproductos != ""){
+            
             db.transaction((tx) => {
                 var pprod = codproductos.split("*");
+                pprod = pprod.slice(0, -1);
+                console.log("presentacion de pprod: "+pprod);
                 if(pprod.length > 0){
-                for (let i = 0; i <= pprod.length; i++) {
+                for (let i = 0; i < pprod.length; i++) {
                     console.log("valor de pprod: "+pprod[i]);
+                    try{
                     if(pprod[i].includes("-")){
-                    var pget = pprod[i].split("-");
-                    tx.executeSql(
-                        'UPDATE Catproducto SET cd_idcatalogo = ? WHERE cd_idoffline = ?',
-                        [pget[1], pget[0]],
-                        (tx, results) => {
-                            console.log("Catproducto Actualizado con éxito: "+pget[0]+" = "+ pget[1])
-                        }
-                        );
+
+                        var pget = pprod[i].split("-");
+                        console.log("Valores de Catalogo: "+pget[0]+" = "+ pget[1]);
+                        console.log("UPDATE Catproducto SET cd_idcatalogo = "+pget[0]+" WHERE cd_idoffline = "+ pget[1]);
+                        tx.executeSql(
+                            'UPDATE Catproducto SET cd_idcatalogo = ? WHERE cd_idoffline = ?',
+                            [pget[0],pget[1]],
+                            (tx, results) => {
+                                console.log('Consulta ejecutada con éxito:', results.rowsAffected);
+                               // console.log("Catproducto Actualizado con éxito: "+pget[0]+" = "+ pget[1])
+                               tx.executeSql('UPDATE Catalogo SET ct_modprod = 0, ct_cantprod = ? WHERE ct_idcata = ?',[pprod.length, idcatalogo],(tx, results) => {
+                                console.log("Actualizado catalogo");
+                               });
+                            }
+                            );
+                    }
+                }
+                    catch (error) {
+                        console.error("Error al procesar pprod[" + i + "]: " + error.message);
                     }
                 }
             }
                 setcodproductos("");
 
 
-                
             });
         }
     }, [codproductos])
+
+
+    useEffect(() => {
+        if(codprodpromo != ""){
+            
+            db.transaction((tx) => {
+                var pprom = codprodpromo.split("*");
+                pprom = pprom.slice(0, -1);
+                console.log("presentacion de pprom: "+pprom);
+                if(pprom.length > 0){
+                for (let i = 0; i < pprom.length; i++) {
+                    console.log("valor de pprom: "+pprom[i]);
+                    try{
+                    if(pprom[i].includes("-")){
+
+                        var pget = pprom[i].split("-");
+                        console.log("Valores de Catalogo: "+pget[0]+" = "+ pget[1]);
+                        console.log("UPDATE CatPromociones SET ch_idcatalogo = "+pget[0]+" WHERE ch_idoffline = "+ pget[1]);
+                        tx.executeSql(
+                            'UPDATE CatPromociones SET ch_idcatalogo = ? WHERE ch_idoffline = ?',
+                            [pget[0],pget[1]],
+                            (tx, results) => {
+                                console.log('Consulta ejecutada con éxito:', results.rowsAffected);
+                               tx.executeSql('UPDATE Catalogo SET ct_modprom = 0, ct_cantpromo = ? WHERE ct_idcata = ?',[pprom.length, idcatalogo],(tx, results) => {
+                                console.log("Actualizado catalogo promo");
+                               });
+                            }
+                            );
+                    }
+                }
+                    catch (error) {
+                        console.error("Error al procesar pprom[" + i + "]: " + error.message);
+                    }
+                }
+            }
+                setcodprodpromo("");
+
+
+            });
+        }
+    }, [codprodpromo])
+
+
+    useEffect(() => {
+        if(codprodliqui != ""){
+            
+            db.transaction((tx) => {
+                var pliqui = codprodliqui.split("*");
+                pliqui = pliqui.slice(0, -1);
+                console.log("presentacion de pliqui: "+pliqui);
+                if(pliqui.length > 0){
+                for (let i = 0; i < pliqui.length; i++) {
+                    console.log("valor de pliqui: "+pliqui[i]);
+                    try{
+                    if(pliqui[i].includes("-")){
+
+                        var pget = pliqui[i].split("-");
+                        console.log("Valores de Catalogo: "+pget[0]+" = "+ pget[1]);
+                        console.log("UPDATE CatLiquidaciones SET cl_idcatalogo = "+pget[0]+" WHERE cl_idoffline = "+ pget[1]);
+                        tx.executeSql(
+                            'UPDATE CatLiquidaciones SET cl_idcatalogo = ? WHERE cl_idcatalogo = ?',
+                            [pget[0],pget[1]],
+                            (tx, results) => {
+                                console.log('Consulta ejecutada con éxito:', results.rowsAffected);
+                               tx.executeSql('UPDATE Catalogo SET ct_modliqui = 0, ct_cantliqui = ? WHERE ct_idcata = ?',[pliqui.length, idcatalogo],(tx, results) => {
+                                console.log("Actualizado catalogo liquidaciones");
+                               });
+                            }
+                            );
+                    }
+                }
+                    catch (error) {
+                        console.error("Error al procesar pliqui[" + i + "]: " + error.message);
+                    }
+                }
+            }
+                setcodprodliqui("");
+
+
+            });
+        }
+    }, [codprodliqui])
+
+
+    useEffect(() => {
+        if(codcombo != ""){
+            
+            db.transaction((tx) => {
+                var pcombo = codcombo.split("*");
+                pcombo = pcombo.slice(0, -1);
+                console.log("presentacion de pcombo: "+pcombo);
+                if(pcombo.length > 0){
+                for (let i = 0; i < pcombo.length; i++) {
+                    console.log("valor de pliqui: "+pcombo[i]);
+                    try{
+                    if(pcombo[i].includes("-")){
+
+                        var pget = pcombo[i].split("-");
+                        console.log("Valores de Catalogo: "+pget[0]+" = "+ pget[1]);
+                        console.log("UPDATE Catcombos SET cc_idcatalogo = "+pget[0]+" WHERE cc_idoffline = "+ pget[1]);
+                        tx.executeSql(
+                            'UPDATE Catcombos SET cc_idcatalogo = ? WHERE cc_idoffline = ?',
+                            [pget[0],pget[1]],
+                            (tx, results) => {
+                                console.log('Consulta ejecutada con éxito:', results.rowsAffected);
+                               tx.executeSql('UPDATE Catalogo SET ct_modcombo = 0, ct_cantcombo = ? WHERE ct_idcata = ?',[pcombo.length, idcatalogo],(tx, results) => {
+                                console.log("Actualizado catalogo combo");
+                               });
+                            }
+                            );
+                    }
+                }
+                    catch (error) {
+                        console.error("Error al procesar pcombo[" + i + "]: " + error.message);
+                    }
+                }
+            }
+                setcodcombo("");
+
+
+            });
+        }
+    }, [codcombo])
+
+
+    const modificarCabecera = async () => {
+        db = SQLite.openDatabase(
+            database_name,
+            database_version,
+            database_displayname,
+            database_size,
+        ); 
+        console.log("entro a edicion de cabecera");
+        db.transaction((tx) => {
+                tx.executeSql(
+                    "UPDATE Catalogo SET ct_modcabecera = 1 WHERE ct_codigo = ?",
+                    [ct_codigo],
+                    (tx, results) => {
+                        if (results.rowsAffected > 0) {
+                            console.log("se actualizo la cabecera");
+                            setModificado(0);
+                          }
+                    },
+                    (tx, error) => {
+                      // Error en la segunda consulta
+                      console.log("error al modificar cabecera: "+error)
+                    }
+                    );
+        });
+        
+    };
     
     
 
@@ -640,61 +790,11 @@ export default function SCatalogo(props) {
 
         console.log(dtproductos)
         setCodigofin(dtproductos)
-        setModificado(1);
+        setModificado(0);
         console.log(ct_codigo)
         console.log(tcatalogo)
 
-        /*
-        db.transaction((tx) => {
-            tx.executeSql(
-            sql1,
-            [`${ct_codigo}`],
-            (tx, results) => {
-                    var len = results.rows.length;
-                    console.log("tamaño: " + len)
-                    
-                    if(len > 0){
-                        setCodigofin(results.rows.item(0).cd_codigo+1)
-                        codigovar = results.rows.item(0).cd_codigo+1;
-                    }
-                    else {
-                        setCodigofin(1)
-                        codigovar = 1;
-                    }
-                    
-                    var tot = ArrayDatos.length;
-                    var num = 1;
-
-                    for (let idproducto of ArrayDatos) {
-                        console.log(codigovar)
-                        console.log("id de producto*222: " + idproducto);
-                        insertProductos(codigovar, idproducto, tot, num, sql2)
-                        codigovar++;
-                        num++;
-                        
-                    }
-                    
-                    
-            }
-            );
-        });*/
-
-        /*console.log("https://app.cotzul.com/Catalogo/php/conect/db_insertProductos.php?idcatalogo="+ct_codigo+"&idproductos="+dtproductos+"&tcatalogo="+tcatalogo);
-
-        try {
-            const response = await fetch(
-              "https://app.cotzul.com/Catalogo/php/conect/db_insertProductos.php?idcatalogo="+ct_codigo+"&idproductos="+dtproductos+"&tcatalogo="+tcatalogo
-            );
-            const jsonResponse = await response.json();
-            console.log(jsonResponse)
-            jsonResponse?.productosid.map((value,index) => {
-               setCodigofin(value.codigo)
-            });
-
-          } catch (error) {
-            console.log("un error cachado");
-            console.log(error);
-          }*/
+       
         
         
     }
@@ -940,7 +1040,8 @@ export default function SCatalogo(props) {
     
 
     useEffect(()  => {
-        if(cntp > 0){
+        console.log("valor de cntp:"+cntp);
+    if(cntp > -1){
        
         console.log("prueba salio1: "+ cntp);
         if(cntp>0){
@@ -990,6 +1091,17 @@ export default function SCatalogo(props) {
     }
     },[cntc])
 
+
+    useEffect(()  => {
+        if(cntcp > -1){
+
+        console.log("prueba salio5: "+ cntcp);
+        if(cntcp> 0){
+                    console.log("Prueba Cabecera-: "+ codigocabecera);  
+        }
+        CargarDatosparaEnvio(6);
+    }
+    },[cntcp])
 
 
     useEffect(()=>{
@@ -1153,11 +1265,11 @@ export default function SCatalogo(props) {
 
                 
                 
-                <ScrollView style={styles.scrollview}>
+                <View style={styles.scrollview}>
                 <View style={styles.productoWrapper}>
                 <DataAddProd texto={search} sql={sql} tipocat={tcatalogo} ArrayDatos={ArrayDatos} />
                 </View>
-            </ScrollView>
+                        </View>
                 
             {(btnvisible) ? 
             <Button
@@ -1206,7 +1318,7 @@ export default function SCatalogo(props) {
                         style={styles.input}
                         onChangeText={onChangeText}
                         value={nombreCata}
-                        keyboardType="text"
+                        keyboardType="default"
 
                     />
 
@@ -1259,7 +1371,7 @@ export default function SCatalogo(props) {
 
             </Modal>
             <View style={styles.buttonsContainer}>
-                {(idcatalogo == 0 || idcatalogo == null || modificado != 0) ? <Button
+                {(idcatalogo == 0 || idcatalogo == null || modificado != 1) ? <Button
                     containerStyle={styles.btnContainerSincronizar}
                     buttonStyle = {styles.btnLogin}
                     icon={
@@ -1270,7 +1382,7 @@ export default function SCatalogo(props) {
                           color="white"
                         />
                       }
-                    title='Sincronizar' 
+                    title='Sincronizar'
                     onPress={(CargarDatos)} 
                     /> :<><Button
                     containerStyle={styles.btnContainerLogin}
@@ -1284,8 +1396,6 @@ export default function SCatalogo(props) {
                           color="white"
                         />
                       }
-
-                      //https://app.cotzul.com/Catalogo/Presentacion/prod/productos.php?idcata="+idcatalogo+"&tipocata="+tcatalogo+"&tipo="+tprecio
                     onPress={ () => openUrl("https://app.cotzul.com/Catalogo/catalogocliente2.php?idcatalogo="+idcatalogo+"&idcliente="+ct_codcliente+"&tipousu=1")} 
                     />
                 <Button
@@ -1319,6 +1429,9 @@ export default function SCatalogo(props) {
                     />
                      
                 </View>
+
+                {(idcatalogo != 0 || idcatalogo != null) ? <ModalCabeceras idcatalogo={ct_idcata} tipo={tcatalogo} modificarCabecera={modificarCabecera}></ModalCabeceras>:<></>}
+               
                 <Button
                     containerStyle={styles.btnContainerTotal}
                     buttonStyle = {styles.btnLogin}
@@ -1348,7 +1461,7 @@ export default function SCatalogo(props) {
           />
                 <Text style={styles.titlesecond}>{nomcatalogo}:</Text>
             </View>
-            <ScrollView>
+            <View>
             {posts == null || posts.length == 0 ? (
                 <View><NoFoundProducts /></View>
             ) : (<View>
@@ -1359,7 +1472,7 @@ export default function SCatalogo(props) {
                 ListFooterComponent={() => <View style={{flex:1,justifyContent: "center",alignItems: "center"}}><Text style={styles.finalproducto}>--- Fin de busqueda ---</Text></View>}
                 />
             </View>)}
-            </ScrollView>
+            </View>
         </View>
     )
 }
@@ -1526,6 +1639,7 @@ function ListProducto(props){
                 </TouchableOpacity>);
 }
 
+
 async function openUrl(url){
     console.log(url)
     const isSupported = await Linking.canOpenURL(url);
@@ -1550,13 +1664,11 @@ const styles = StyleSheet.create({
     buttonsContainer:{
         flexDirection: 'row',
         alignItems:'center',
-        marginBottom: 10,
     },
     btnLogin:{
         backgroundColor: "#00a680",
     },
     btnContainerSincronizar:{
-        marginTop: 10,
         paddingHorizontal: 5, 
         width: "66%"
     },

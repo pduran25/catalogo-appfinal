@@ -18,6 +18,7 @@ const key_check3 = '@check3'
 const key_check4 = '@check4'
 const key_check5 = '@check5'
 const key_check6 = '@check6'
+const STORAGE_CHECK = '@scheck_data'
 
 
 export default function LoginForm(props) {
@@ -27,7 +28,7 @@ export default function LoginForm(props) {
     const [dataUser, setdataUser] = useState(defaultValueUser());
     const [user, setUser] = useState(false);
     const [basedatos, setBasedatos] = useState(false);
-    const {signUp} = React.useContext(AuthContext);
+    const {signNext} = React.useContext(AuthContext);
     const [internet, setInternet] = useState(true);
     
    
@@ -47,7 +48,7 @@ export default function LoginForm(props) {
 
     const setDB = async (value) => {
         try {
-            UpdateChecks()
+           // UpdateChecks()
             await AsyncStorage.setItem(STORAGE_DB, value)
             
           } catch(e) {
@@ -99,6 +100,7 @@ export default function LoginForm(props) {
    
 
     const onSubmit = async () =>{
+        await AsyncStorage.removeItem(STORAGE_CHECK)
         reviewInternet()
         if(internet){
             if(isEmpty(formData.usuario) || isEmpty(formData.password)){
@@ -113,9 +115,10 @@ export default function LoginForm(props) {
                     console.log(respuesta.usuario[0].us_nombre);
                     if(respuesta.usuario[0].us_codigo != 0){
                         setUser(true);
+                        console.log("ver usuario: "+respuesta.usuario[0]);
                         storeData(respuesta.usuario[0]);
                         setDB("NO") 
-                        signUp()
+                        signNext()
                     }else{
                         toastRef.current.show("El usuario o contraseña estan erroneos");
                     }

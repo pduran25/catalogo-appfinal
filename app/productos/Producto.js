@@ -10,7 +10,7 @@ import { Table, TableWrapper, Row, Rows, Col  } from 'react-native-table-compone
 import Picker from '@ouroboros/react-native-picker';
 
 const screenWidth = Dimensions.get("window").width;
-const database_name = 'CotzulBD4.db';
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
@@ -308,7 +308,7 @@ export default function Producto(props) {
                         <>
                         <Text style={styles.labelcorta}>Ingresa precio personalizado:</Text>
                         <TextInput style={styles.input} 
-                        keyboardType='numeric'
+                        keyboardType='default'
                         placeholder='0,0'
                         onChangeText={(val)=> setPrecio(val)}
                         />

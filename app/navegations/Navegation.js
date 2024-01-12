@@ -35,6 +35,14 @@ export default function Navigation(props){
             setUserToken('keyrubikload');
             setIsLoading(false);
             setChargue(1);
+        }, signNext: () => {
+            setUserToken('keyrubiknext');
+            setIsLoading(false);
+            setChargue(2);
+        }, signLoad: () => {
+            setUserToken('keyrubikload');
+            setIsLoading(false);
+            setChargue(3);
         },
         signOut: () => {
             setUserToken(null);
@@ -74,33 +82,43 @@ export default function Navigation(props){
     return(
         <AuthContext.Provider value={authContext}>
         <NavigationContainer> 
-            {(userToken == null) ? <LoginForm  toastRef={toastRef} /> : 
-             (userToken === 'keyrubikload') ? <CargarDatos toastRef={toastRef} /> : 
+            {(chargue == 0)  ? <LoginForm  toastRef={toastRef} /> : 
+              (chargue == 1) ? 
             <Tab.Navigator
             initialRouteName="restaurants"
-          
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ color }) => screenOptions(route, color),
               })}
             >
                 <Tab.Screen 
-                    name="productos" 
+                    name="Productos" 
                     component={ProductosStack}
                     options={{headerShown: false}}
                     />
                     <Tab.Screen 
-                    name="catalogos" 
+                    name="Catalogos" 
                     component={CatalogoStack}
                     options={{headerShown: false}} />
                     <Tab.Screen 
-                    name="clientes" 
+                    name="Clientes" 
                     component={ClienteStack}
                     options={{headerShown: false}}  />
                     <Tab.Screen 
-                    name="perfil" 
+                    name="Perfil" 
                     component={PerfilStack}
                     options={{headerShown: false}}  />
-            </Tab.Navigator>}
+            </Tab.Navigator>: (chargue == 2) ? <Tab.Navigator
+            initialRouteName="restaurants"
+            screenOptions={({ route }) => ({
+                tabBarIcon: ({ color }) => screenOptions(route, color),
+              })}
+            >
+            
+                    <Tab.Screen 
+                    name="Perfil" 
+                    component={PerfilStack}
+                    options={{headerShown: false}}  />
+            </Tab.Navigator> : <CargarDatos></CargarDatos>}
                 </NavigationContainer>
                 </AuthContext.Provider>
           
@@ -110,16 +128,16 @@ export default function Navigation(props){
 function screenOptions(route, color){
     let iconName;
     switch(route.name){
-        case "productos":
+        case "Productos":
             iconName = "gift-outline";
             break;
-        case "catalogos":
+        case "Catalogos":
             iconName = "book-open-variant";
             break;
-        case "clientes":
+        case "Clientes":
             iconName = "account-multiple";
             break;
-        case "perfil":
+        case "Perfil":
             iconName = "account-circle";
             break;
         default: 

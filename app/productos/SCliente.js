@@ -4,7 +4,7 @@ import axios from 'axios'
 import { colors } from "react-native-elements";
 import * as SQLite from 'expo-sqlite';
 
-const database_name = 'CotzulBD4.db';
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;

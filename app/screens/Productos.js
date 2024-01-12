@@ -10,6 +10,8 @@ import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Picker from '@ouroboros/react-native-picker';
 import NetInfo from "@react-native-community/netinfo";
+import ActualizacionBolita from './Actualizacionbolita';
+
 
 
 export default function Productos(){
@@ -20,16 +22,19 @@ export default function Productos(){
     const [tproducto, setTproducto] = useState(0)
     const [internet, setInternet] = useState(false);
 
-    const database_name = 'CotzulBD4.db';
+    const database_name = 'CotzulBD6.db';
     const database_version = '1.0';
     const database_displayname = 'CotzulBD';
     const database_size = 200000;
+    const [estaActualizada, setEstaActualizada] = useState(0);
+    const [loading, setLoading] = useState(false);
 
 
 
     useEffect(() => {
         getDataFamilia()
-        const interval = setInterval(myFunction, 10000);
+        //const interval = setInterval(myFunction, 10000);
+        //const interval2 = setInterval(revisaOnline, 20000);
     },[]);
 
     const myFunction = () => {
@@ -45,6 +50,59 @@ export default function Productos(){
         });
     } 
 
+    setActualiza = async (texto) => {
+      try {
+        setLoading(true)
+        const response = await fetch(
+          "https://app.cotzul.com/Catalogo/php/conect/db_setBackgroundCata.php?data="+texto
+        );
+
+        console.log("https://app.cotzul.com/Catalogo/php/conect/db_setBackgroundCata.php?data="+texto);
+
+       // console.log("para actualizar: "+ texto);
+       setEstaActualizada(1);
+      
+        
+        const jsonResponse = await response.json();
+        saveData(jsonResponse);
+        setLoading(false);
+        setEstaActualizada(0);
+      } catch (error) {
+        setLoading(false)
+        console.log(error);
+      }
+    };
+
+    saveData = async (myResponse) => {
+      console.log("entró a la parte de grabacion-Productos")
+     
+      if (loading) {
+        db = SQLite.openDatabase(
+          database_name,
+          database_version,
+          database_displayname,
+          database_size,
+      ); 
+      var cont = 0;
+      db.transaction( (txn) => {
+                    myResponse?.actualizado.map((value,index) => {
+                    txn.executeSql(
+                        'UPDATE Catalogo SET ct_modprod = 0, ct_modprom = 0, ct_modliqui = 0, ct_modxllegar = 0, ct_modcombo = 0', [value.idcata],
+                        (txn, results) => {
+                          if (results.rowsAffected > 0) {
+                            cont++;
+                            console.log("Catalogo_" + cont);
+                          }
+                        },
+                        (error) => {
+                          console.error('Error al ejecutar la consulta UPDATE:', error);
+                        })
+                    })
+                  });
+              
+        }
+    }
+
 
     useEffect(() => {
       if(internet){
@@ -52,7 +110,11 @@ export default function Productos(){
         // Ejemplo de uso
       revisarCatalogo2()
       .then((textoConcatenado) => {
+        if(textoConcatenado.length>0)
+          setActualiza(textoConcatenado);
+        
         console.log("Texto Concatenado:", textoConcatenado);
+
       })
       .catch((error) => {
         console.error("Error en la función principal:", error);
@@ -60,6 +122,22 @@ export default function Productos(){
 
       }
     }, [internet]);
+
+    const revisaOnline = async () => {
+      console.log("Revisamos si hay alguna modificacion online----");
+        // Ejemplo de uso
+      revisarCatalogo2()
+      .then((textoConcatenado) => {
+        if(textoConcatenado.length>0)
+          setActualiza(textoConcatenado);
+        
+        console.log("Texto Concatenado:", textoConcatenado);
+
+      })
+      .catch((error) => {
+        console.error("Error en la función principal:", error);
+      });
+    }
 
     
     const revisarCatalogo2 = async () => {
@@ -70,6 +148,8 @@ export default function Productos(){
             database_displayname,
             database_size
           );
+
+          console.log("Veces que entro");
       
           let texto = "";
           let texto1 = "";
@@ -92,6 +172,7 @@ export default function Productos(){
                 for (let i = 0; i < len; i++) {
                   let row = results.rows.item(i);
                   let idcode = row.ct_codigo;
+                  
       
                   console.log(`FECHAMOD : ${row.ct_fechamod}`);
                   console.log(`NOMCATA : ${row.ct_nomcata}`);
@@ -107,31 +188,96 @@ export default function Productos(){
                     row.ct_modliqui +
                     row.ct_modxllegar +
                     row.ct_modcombo;
+
+                    console.log("entro en ct_total1: "+row.ct_modprod);
+                    console.log("entro en ct_total2: "+row.ct_modprom);
+                    console.log("entro en ct_total3: "+row.ct_modliqui);
+                    console.log("entro en ct_total4: "+row.ct_modxllegar);
+                    console.log("entro en ct_total5: "+row.ct_modcombo);
       
                   if (ct_total > 0) {
                     var idcatalo = row.ct_idcata;
+                    var idvendedor = row.ct_codvendedor;
+                    var idcliente = row.ct_codcliente;
+                    var nomcata = row.ct_nomcata;
+
+                    console.log("entro en ct_total: "+ct_total);
+
+                    
+                    let catalogoProd = {
+                      nomcata: nomcata,
+                      idvendedor: idvendedor,
+                      idcliente: idcliente,
+                      idcatalogo: idcatalo,
+                      tipocat: '',
+                      productos: [],
+                    };
+
+                    let catalogoProm = {
+                      nomcata: nomcata,
+                      idvendedor: idvendedor,
+                      idcliente: idcliente,
+                      idcatalogo: idcatalo,
+                      tipocat: '',
+                      productos: [],
+                    };
+
+                    let catalogoliqui = {
+                      nomcata: nomcata,
+                      idvendedor: idvendedor,
+                      idcliente: idcliente,
+                      idcatalogo: idcatalo,
+                      tipocat: '',
+                      productos: [],
+                    };
+
+                    let catalogoCata = {
+                      nomcata: nomcata,
+                      idvendedor: idvendedor,
+                      idcliente: idcliente,
+                      idcatalogo: idcatalo,
+                      tipocat: '',
+                      productos: [],
+                    };
                     
       
                     if (row.ct_modprod > 0) {
+
+                      catalogoProd = {
+                        nomcata: nomcata,
+                        idvendedor: idvendedor,
+                        idcliente: idcliente,
+                        idcatalogo: idcatalo,
+                        tipocat: '',
+                        productos: [],
+                    };
+                      
+                      console.log("SELECT * FROM Catproducto WHERE cd_idoffline = "+idcode);
                       tx.executeSql(
                         'SELECT * FROM Catproducto WHERE cd_idoffline =  ?',
                         [idcode],
                         (tx, results) => {
                           var len2 = 0;
                           len2 = results.rows.length;
+                          var nump = 0;
 
-                         
+                          
       
                           if (len2 > 0) {
-                            console.log("ingreso 1");
-                            cat1 = cat1 + "%idcatalogo=" + idcatalo + "%";
-                            texto1 = texto1 + "*tipocat=1*";
+                           
+                            catalogoProd.tipocat = '1';
+
+                            for (let j = 0; j < len2; j++) {
+                              const row2 = results.rows.item(j);
+                              catalogoProd.productos.push(row2.cd_idproducto);
+                              if(j==len2-1){
+                                texto = texto + JSON.stringify(catalogoProd);
+                                
+                              }
+                            }
                           }
       
-                          for (let j = 0; j < len2; j++) {
-                            const row2 = results.rows.item(j);
-                            texto1 = texto1 + row2.cd_idproducto + "-";
-                          }
+                          
                         },
                         (tx, error) => {
                           console.error("Error en concatenar 1:", error);
@@ -141,6 +287,15 @@ export default function Productos(){
                     }
       
                     if (row.ct_modprom > 0) {
+                      catalogoProm = {
+                        nomcata: nomcata,
+                        idvendedor: idvendedor,
+                        idcliente: idcliente,
+                        idcatalogo: idcatalo,
+                        tipocat: '',
+                        productos: [],
+                    };
+                      
                       tx.executeSql(
                         'SELECT * FROM CatPromociones WHERE ch_idoffline =  ?',
                         [idcode],
@@ -148,17 +303,16 @@ export default function Productos(){
                           var len2 = 0;
                           len2 = results.rows.length;
 
-                         
+                         if(len2 > 0)
+                          catalogoProm.tipocat = '2';
       
-                          if (len2 > 0) {
-                            console.log("ingreso 2");
-                            cat2 = cat2 + "%idcatalogo=" + idcatalo + "%";
-                            texto2 = texto2 + "*tipocat=2*";
-                          }
       
                           for (let j = 0; j < len2; j++) {
                             const row2 = results.rows.item(j);
-                            texto2 = texto2 + row2.ch_idproducto + "-";
+                            catalogoProm.productos.push(row2.ch_idproducto);
+                            if(j==len2-1){
+                              texto = texto + JSON.stringify(catalogoProm);
+                            }
                           }
                         },
                         (tx, error) => {
@@ -169,6 +323,14 @@ export default function Productos(){
                     }
       
                     if (row.ct_modliqui > 0) {
+                      catalogoliqui = {
+                        nomcata: nomcata,
+                        idvendedor: idvendedor,
+                        idcliente: idcliente,
+                        idcatalogo: idcatalo,
+                        tipocat: '',
+                        productos: [],
+                    };
                       tx.executeSql(
                         'SELECT * FROM CatLiquidaciones WHERE cl_idoffline =  ?',
                         [idcode],
@@ -178,14 +340,15 @@ export default function Productos(){
                           
       
                           if (len2 > 0) {
-                            console.log("ingreso 3");
-                            cat3 = cat3 + "%idcatalogo=" + idcatalo + "%";
-                            texto3 = texto3 + "*tipocat=3*";
+                            catalogoliqui.tipocat = '3';
                           }
       
                           for (let j = 0; j < len2; j++) {
                             const row2 = results.rows.item(j);
-                            texto3 = texto3 + row2.cl_idproducto + "-";
+                            catalogoliqui.productos.push(row2.cl_idproducto);
+                            if(j==len2-1){
+                              texto = texto + JSON.stringify(catalogoliqui);
+                            }
                           }
                         },
                         (tx, error) => {
@@ -196,6 +359,14 @@ export default function Productos(){
                     }
       
                     if (row.ct_modcombo > 0) {
+                      catalogoCata = {
+                        nomcata: nomcata,
+                        idvendedor: idvendedor,
+                        idcliente: idcliente,
+                        idcatalogo: idcatalo,
+                        tipocat: '',
+                        productos: [],
+                    };
                       tx.executeSql(
                         'SELECT * FROM Catcombos WHERE cc_idoffline =  ?',
                         [idcode],
@@ -204,14 +375,15 @@ export default function Productos(){
                           len2 = results.rows.length;
                           
                           if (len2 > 0) {
-                            console.log("ingreso 4");
-                            cat4 = cat4 + "%idcatalogo=" + idcatalo + "%";
-                            texto4 = texto4 + "*tipocat=4*";
+                            catalogoCata.tipocat = '5';
                           }
       
                           for (let j = 0; j < len2; j++) {
                             const row2 = results.rows.item(j);
-                            texto4 = texto4 + row2.cc_idcombo + "-";
+                            catalogoCata.productos.push(row2.cc_idcombo);
+                            if(j==len2-1){
+                              texto = texto + JSON.stringify(catalogoCata);
+                            }
                           }
                         },
                         (tx, error) => {
@@ -223,7 +395,7 @@ export default function Productos(){
 
                     
       
-                    console.log("***Registrado: " + texto);
+                  //  console.log("***Registrado: " + texto);
                   }
                 }
               });
@@ -235,8 +407,7 @@ export default function Productos(){
             },
             () => {
               // Transacción completada con éxito
-              texto =    cat1 + texto1 + cat2 +  texto2 + cat3 +  texto3 + cat4 +  texto4;
-              //texto =    texto1 +  texto2 + texto3 +  texto4;
+
               resolve(texto);
             }
           );
@@ -426,6 +597,7 @@ export default function Productos(){
    
     return(
         <View style={styles.container}>
+         {/*<ActualizacionBolita actualizada={estaActualizada} />*/}
             <View style={styles.titlesWrapper}>
                 <Text style={styles.titlesSubtitle}>Productos</Text>
                 <Text style={styles.titlesTitle}>Cotzul S.A.</Text>
@@ -444,17 +616,7 @@ export default function Productos(){
                 
             </View>
             <View style={styles.categoriaWrapper1}>
-            <Text style={styles.titlesSubtitle}>Tipo Productos:{/* <RNPickerSelect
-                    useNativeAndroidPickerStyle={false}
-                    style={pickerStyle}
-                    onValueChange={(tproducto) => setTproducto(tproducto)}
-                    placeholder={{ label: "Productos", value: 0 }}
-                    items={[
-                        { label: "Promoción", value: 1 },
-                        { label: "Liquidación", value: 2 },
-                        { label: "x LLegar", value: 3 },
-                    ]}
-                />*/}</Text><Picker
+            <Text style={styles.titlesSubtitle}>Tipo Productos:</Text><Picker
               onChanged={setTproducto}
               options={[
                 {value: 0, text: 'Productos'},
@@ -467,26 +629,12 @@ export default function Productos(){
               value={tproducto}
           />
             </View>
-            {/*
-                (tproducto == 0)?(
-                    <View style={styles.categoriaWrapper}>
-                    <View style={styles.categoriaListWrapper}>
-                        <FlatList 
-                        data ={familias}
-                        renderItem = {({ item }) => ( <TouchableOpacity style={item.fa_codigo == elegido ? styles.categoriaItemWrapper1 : styles.categoriaItemWrapper2} onPress={() => goFamilia(item.fa_codigo)}><View ><Text style={styles.textItem}>{item.fa_familia}</Text></View></TouchableOpacity>)}
-                        keyExtractor = {item => item.fa_codigo}
-                        horizontal = {true}/>
-                    </View>
-                </View>
-                ):null
-                */}
             
-            {/*Familias*/}
-            <ScrollView style={styles.scrollview}>
+            <View style={styles.scrollview}>
                 <View style={styles.productoWrapper}>
                     <DataExtra texto={search} familia={elegido} tproducto={tproducto} />
                 </View>
-            </ScrollView>
+            </View>
         </View>
     );
 };

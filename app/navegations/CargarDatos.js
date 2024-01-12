@@ -7,10 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import LoginForm from './LoginForm';
 import Navigation from "../navegations/Navegation";
 import { AuthContext } from "../components/Context"
+import * as Progress from 'react-native-progress';
 
 
 
-const database_name = 'CotzulBD4.db';
+
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
@@ -28,6 +30,7 @@ export default function CargarDatos(props) {
     const [dataUser, setdataUser] = useState(defaultValueUser());
     const [loading2, setLoading2] = useState(false);
     const [loading3, setLoading3] = useState(false);
+    const [loading15, setLoading15] = useState(false);
     const [loading4, setLoading4] = useState(false);
     const [loading5, setLoading5] = useState(false);
     const [loading6, setLoading6] = useState(false);
@@ -46,6 +49,7 @@ export default function CargarDatos(props) {
     const [usuario, setUsuario] = useState(false);
     const [user, setUser] = useState(false);
     const [textIndicador, settextIndicador] = useState("Cargando...");
+    const [porcent, setPorcent] = useState(0);
     const [actdb, setActDB] = useState(-1);
     const [actfam, setActFAM] = useState(-1);
     const [acthueso, setActHueso] = useState(-1);
@@ -62,7 +66,7 @@ export default function CargarDatos(props) {
     const [check5, setCheck5] = useState(false);
     const [check6, setCheck6] = useState(false);
 
-    const {signIn} = React.useContext(AuthContext);
+    const {signUp} = React.useContext(AuthContext);
     let db = null;
 
     const key_check1 = '@check1'
@@ -129,7 +133,8 @@ export default function CargarDatos(props) {
       if(actdb <= 6){
         if(actdb == 1){
           if(check1){
-            getData();
+           getData(1);
+           //updateCatProductos();
             console.log("entro a ActDB check1: "+check1);
           }else
             setActDB(actdb+1);
@@ -168,23 +173,28 @@ export default function CargarDatos(props) {
               setActDB(-1);
               setUser(true);
               setDB("SI");
-              signIn()
+              signUp();
       }
       
       
     }, [actdb])
     
         
-        getData = async () => {
+        getData = async (secuencia) => {
+          console.log("SE ABRE SECUENCIA: "+ secuencia);
           try {
             settextIndicador("Registro de Datos productos ... ");
             setLoading(true)
             const response = await fetch(
-              "https://app.cotzul.com/Catalogo/php/conect/db_getAllData.php"
+              "https://app.cotzul.com/Catalogo/php/conect/db_getAllData2.php?secuencia="+secuencia
             );
-            
             const jsonResponse = await response.json();
-            saveDbData(jsonResponse);
+            if(jsonResponse != null){
+              setPorcent(0.05*secuencia);
+              saveDbData(jsonResponse,secuencia);
+            }
+            else
+              getCatalogos();
             setLoading(false)
           } catch (error) {
             setLoading(false)
@@ -193,8 +203,9 @@ export default function CargarDatos(props) {
         };
 
 
-        saveDbData = async (myResponse) => {
-          console.log("entró a la parte de grabacion")
+        saveDbData = async (myResponse, secuencia) => {
+          const MAX_SEQUENCE = 20;
+          console.log("entró a la parte de grabacion - grabar datos")
          
           if (loading) {
             db = SQLite.openDatabase(
@@ -204,66 +215,101 @@ export default function CargarDatos(props) {
               database_size,
           ); 
           var cont = 0;
-             
-            db.transaction((tx) => {
-              tx.executeSql("DROP TABLE IF EXISTS Producto")
-              tx.executeSql(
-                "CREATE TABLE IF NOT EXISTS "
-                + "Producto "
-                + "(pr_codigo INTEGER, pr_codprod VARCHAR(20), pr_referencia VARCHAR(20), pr_descorta TEXT, pr_deslarga TEXT, pr_marca VARCHAR(20), "
-                + "pr_codfamilia INTEGER, pr_codnivel1 INTEGER, pr_codnivel2 INTEGER, pr_familia VARCHAR(20),"
-                + "pr_nivel1 VARCHAR(20), pr_nivel2 VARCHAR(20), pr_pvp DOUBLE, pr_preciosub DOUBLE, pr_contado DOUBLE, pr_precioiva DOUBLE,"
-                + "pr_credito DOUBLE, pr_stock INTEGER, pr_rutaimg TEXT, pr_arrayimg TEXT, pr_sku INTEGER, pr_cm INTEGER, pr_ce INTEGER,"
-                + "pr_bod INTEGER, pr_alm INTEGER, pr_chi INTEGER, pr_rep INTEGER, pr_subseg DOUBLE, pr_contseg DOUBLE, pr_credseg DOUBLE, pr_pubseg DOUBLE);"
-                )
-                console.log('tx1: ', tx);
-                myResponse?.productos.map((value,index) => {
-                  tx.executeSql(
-                    'INSERT INTO Producto VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)', [
-                      value.pr_codigo,
-                      value.pr_codprod,
-                      value.pr_referencia,
-                      value.pr_descorta,
-                      value.pr_deslarga,
-                      value.pr_marca,
-                      value.pr_codfamilia, 
-                      value.pr_codnivel1,
-                      value.pr_codnivel2,
-                      value.pr_familia,
-                      value.pr_nivel1,
-                      value.pr_nivel2,
-                      value.pr_pvp,
-                      value.pr_preciosub,
-                      value.pr_contado,
-                      value.pr_precioiva,
-                      value.pr_credito,
-                      value.pr_stock,
-                      value.pr_rutaimg,
-                      value.pr_arrayimg, 
-                      value.pr_sku, 
-                      value.pr_cm, 
-                      value.pr_ce, 
-                      value.pr_bod, 
-                      value.pr_alm, 
-                      value.pr_chi, 
-                      value.pr_rep, 
-                      value.pr_subseg, 
-                      value.pr_contseg, 
-                      value.pr_credseg,
-                      value.pr_pubseg
-              ],
-                    (tx, results) => {
-                     // console.log('Productos:', results.rowsAffected);
-                      if (results.rowsAffected > 0) {
-                        cont++;
-                        console.log("Producto_" + cont)
-                      }
-                    })
-                })
-              })
+          let totalProducts = myResponse?.productos.length;
+          let insertedCount = 0;
 
-              getCatalogos();
+
+         
+
+// Obtén la lista de productos desde myResponse
+const productList = myResponse?.productos;
+console.log(productList);
+
+// Inicia una única transacción para insertar todos los productos
+db.transaction((tx) => {
+  if(secuencia == 1){
+      tx.executeSql("DROP TABLE IF EXISTS Producto")
+      tx.executeSql(
+        "CREATE TABLE IF NOT EXISTS "
+        + "Producto "
+        + "(pr_codigo INTEGER, pr_codprod VARCHAR(20), pr_referencia VARCHAR(20), pr_descorta TEXT, pr_deslarga TEXT, pr_marca VARCHAR(20), "
+        + "pr_codfamilia INTEGER, pr_codnivel1 INTEGER, pr_codnivel2 INTEGER, pr_familia VARCHAR(20),"
+        + "pr_nivel1 VARCHAR(20), pr_nivel2 VARCHAR(20), pr_pvp DOUBLE, pr_preciosub DOUBLE, pr_contado DOUBLE, pr_precioiva DOUBLE,"
+        + "pr_credito DOUBLE, pr_stock INTEGER, pr_rutaimg TEXT, pr_arrayimg TEXT, pr_sku INTEGER, pr_cm INTEGER, pr_ce INTEGER,"
+        + "pr_bod INTEGER, pr_alm INTEGER, pr_chi INTEGER, pr_rep INTEGER, pr_subseg DOUBLE, pr_contseg DOUBLE, pr_credseg DOUBLE, pr_pubseg DOUBLE);"
+        )
+  }
+              
+    productList.forEach((product) => {
+        tx.executeSql(
+            'INSERT INTO Producto VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?)', [
+                product.pr_codigo,
+                product.pr_codprod,
+                product.pr_referencia,
+                product.pr_descorta,
+                product.pr_deslarga,
+                product.pr_marca,
+                product.pr_codfamilia,
+                product.pr_codnivel1,
+                product.pr_codnivel2,
+                product.pr_familia,
+                product.pr_nivel1,
+                product.pr_nivel2,
+                product.pr_pvp,
+                product.pr_preciosub,
+                product.pr_contado,
+                product.pr_precioiva,
+                product.pr_credito,
+                product.pr_stock,
+                product.pr_rutaimg,
+                product.pr_arrayimg,
+                product.pr_sku,
+                product.pr_cm,
+                product.pr_ce,
+                product.pr_bod,
+                product.pr_alm,
+                product.pr_chi,
+                product.pr_rep,
+                product.pr_subseg,
+                product.pr_contseg,
+                product.pr_credseg,
+                product.pr_pubseg
+            ],(tx, results) => {
+              if (results.rowsAffected > 0) {
+                insertedCount++;
+                if (insertedCount === totalProducts) {
+                  console.log("Todos los productos insertados para secuencia: " + secuencia);
                   
+                  // Continúa con el siguiente grupo de datos
+                  if (secuencia < MAX_SEQUENCE) {
+                      getData(secuencia + 1);
+                      console.log('Registro insertado correctamente.');
+                   }else{
+
+                   }
+                 }
+
+                  
+              } else {
+                  console.log('No se insertó ningún registro.');
+              }
+          },
+          (tx, error) => {
+              console.log('Error al insertar el producto:', error.message); // Imprime el mensaje de error
+          }
+        );
+    });
+}, 
+(tx, error) => {
+    console.log('Error en transacción general:', error.message);
+}, 
+() => {
+    console.log('Transacción completada con éxito.');
+});
+
+
+              
+              
             }
         }
 
@@ -277,6 +323,7 @@ export default function CargarDatos(props) {
             const jsonResponse2 = await response2.json();
             
             saveDbDataCatalogo(jsonResponse2);
+            
             setLoading2(false)
           } catch (error) {
             setLoading2(false)
@@ -285,103 +332,12 @@ export default function CargarDatos(props) {
           }
         }
 
-        /*getCombos = async () => {
-          try {
-            setLoadingcombo(true)
-            const response2 = await fetch(
-              "https://app.cotzul.com/Catalogo/php/conect/db_getCombos.php"
-            );
-            console.log("https://app.cotzul.com/Catalogo/php/conect/db_getCombos.php");
-            const jsonResponse2 = await response2.json();
-            
-            saveDbCombo(jsonResponse2);
-            setLoadingcombo(false)
-          } catch (error) {
-            setLoadingcombo(false)
-            console.log("un error cachado");
-            console.log(error);
-          }
-        }
-
-        saveDbCombo = async (myResponse) => {
-          if (loadingcombo) {
-              settextIndicador("Registro de Datos Combo ... ");
-              
-              db = SQLite.openDatabase(
-                database_name,
-                database_version,
-                database_displayname,
-                database_size,
-            ); 
-            if(db != null){
-              console.log("entro correctamente a la base de datos 2:")
-            }
-            var cont = 0;
-               db.transaction( (txn) => {
-                txn.executeSql("DROP TABLE IF EXISTS Combo")
-                 txn.executeSql(
-                  "CREATE TABLE IF NOT EXISTS "
-                + "Combo "
-                + "(cb_codigo INTEGER PRIMARY KEY AUTOINCREMENT, cb_nombcombo VARCHAR(50), cb_imgcombo VARCHAR(50), cb_fechareg VARCHAR(50),  cb_fechacad VARCHAR(50), cb_subtotal FLOAT, cb_idcombo INTEGER);"
-                  )
-
-                  
-                  console.log('tx2: ', txn);
-                  myResponse?.combo.map((value,index) => {
-                    
-                   txn.executeSql(
-                      'INSERT INTO Combo(cb_nombcombo, cb_imgcombo, cb_fechareg, cb_fechacad, cb_subtotal, cb_idcombo) VALUES (?, ?, ?, ?, ?, ?)', [
-                        value.cb_nombcombo,
-                        value.cb_imgcombo,
-                        value.ct_fechareg,
-                        value.ct_fechacad,
-                        value.ct_subtotal,
-                        value.cb_codigo
-                    ],
-                      (txn, results) => {
-                        console.log('Combos_afectados', results.rowsAffected);
-                        if (results.rowsAffected > 0) {
-                          cont++;
-                          console.log("Combos_" + cont)
-                        }
-                      })
-                  })
-                })
-                
-                console.log("termino los combos");
-                presentCombo();
-              }
-            
-            
-          }
-
-
-          const presentCombo = async () => {
-          db.transaction((tx) => {
-            tx.executeSql('SELECT * FROM Combo LIMIT 10', [], (tx, results) => {
-              console.log("Query completed");
-         
-              // Get rows with Web SQL Database spec compliance.
-         
-              var len = results.rows.length;
-              console.log("cantidad de combos registrados : " + len);
-              for (let i = 0; i < len; i++) {
-               let row = results.rows.item(i);
-               console.log(`NOMBRE CATALOGO : ${row.cb_nombcombo}`);
-               //this.setState({record: row});
-              }
-              console.log("Combos Registrados con éxito");
-             });
-           });
-
-
-        }*/
+        
 
 
         saveDbDataCatalogo = async (myResponse) => {
         if (loading2) {
             settextIndicador("Registro de Datos Catalogo ... ");
-            
             db = SQLite.openDatabase(
               database_name,
               database_version,
@@ -392,51 +348,81 @@ export default function CargarDatos(props) {
             console.log("entro correctamente a la base de datos 2:")
           }
           var cont = 0;
+          let totalProducts = myResponse?.catalogos.length;
+          let insertedCount = 0;
              db.transaction( (txn) => {
               txn.executeSql("DROP TABLE IF EXISTS Catalogo")
                txn.executeSql(
                 "CREATE TABLE IF NOT EXISTS "
               + "Catalogo "
-              + "(ct_codigo INTEGER PRIMARY KEY AUTOINCREMENT, ct_codcliente INTEGER, ct_nomcliente VARCHAR(100), ct_nomcata VARCHAR(50), ct_tipocli INTEGER, ct_fecha VARCHAR(50), ct_codvendedor INTEGER, ct_descargado VARCHAR(10), ct_cantprod INTEGER, ct_cantpromo INTEGER, ct_cantliqui INTEGER, ct_cantprox INTEGER, ct_cantcombo INTEGER, ct_idcata INTEGER, ct_fechamod VARCHAR(30), ct_modprod INTEGER, ct_modprom INTEGER, ct_modliqui INTEGER, ct_modxllegar INTEGER, ct_modcombo INTEGER);"
+              + "(ct_codigo INTEGER PRIMARY KEY AUTOINCREMENT, ct_codcliente INTEGER, ct_nomcliente VARCHAR(100), ct_nomcata VARCHAR(50), ct_tipocli INTEGER, ct_fecha VARCHAR(50), ct_codvendedor INTEGER, ct_descargado VARCHAR(10), ct_cantprod INTEGER, ct_cantpromo INTEGER, ct_cantliqui INTEGER, ct_cantprox INTEGER, ct_cantcombo INTEGER, ct_idcata INTEGER, ct_fechamod VARCHAR(30), ct_modprod INTEGER, ct_modprom INTEGER, ct_modliqui INTEGER, ct_modxllegar INTEGER, ct_modcombo INTEGER, ct_modcabecera INTEGER);"
                 )
 
                 
                 console.log('tx2: ', txn);
-                myResponse?.catalogos.map((value,index) => {
-                  
-                 txn.executeSql(
-                    'INSERT INTO Catalogo(ct_codcliente, ct_nomcliente, ct_nomcata, ct_tipocli, ct_fecha, ct_codvendedor, ct_descargado, ct_cantprod, ct_cantpromo, ct_cantliqui, ct_cantprox, ct_cantcombo, ct_idcata, ct_fechamod, ct_modprod, ct_modprom, ct_modliqui, ct_modxllegar, ct_modcombo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?)', [
-                      value.ct_idcliente,
-                      value.ct_cliente,
-                      value.ct_nombcat,
-                      value.ct_tipocli,
-                      value.ct_fecha,
-                      value.ct_idvendedor,
-                      value.ct_descargado, 
-                      value.ct_cantprod, 
-                      value.ct_cantpromo, 
-                      value.ct_cantliqui, 
-                      value.ct_cantprox,
-                      value.ct_cantcombo,
-                      value.ct_codigo,
-                      "",
-                      0,
-                      0,
-                      0,
-                      0,
-                      0,
-                  ],
-                    (txn, results) => {
-                      console.log('Catalogos_afectados', results.rowsAffected);
-                      if (results.rowsAffected > 0) {
-                        cont++;
-                        console.log("Catalogo_" + cont)
-                      }
-                    })
-                })
+                const catalogoList = myResponse?.catalogos;
+                console.log(catalogoList);
+
+                if(totalProducts>0){
+                db.transaction((tx) => {
+                  catalogoList.forEach((product) => {
+                      tx.executeSql(
+                        'INSERT INTO Catalogo(ct_codcliente, ct_nomcliente, ct_nomcata, ct_tipocli, ct_fecha, ct_codvendedor, ct_descargado, ct_cantprod, ct_cantpromo, ct_cantliqui, ct_cantprox, ct_cantcombo, ct_idcata, ct_fechamod, ct_modprod, ct_modprom, ct_modliqui, ct_modxllegar, ct_modcombo, ct_modcabecera) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?, ?)', [
+                          product.ct_idcliente,
+                          product.ct_cliente,
+                          product.ct_nombcat,
+                          product.ct_tipocli,
+                          product.ct_fecha,
+                          product.ct_idvendedor,
+                          product.ct_descargado, 
+                          product.ct_cantprod, 
+                          product.ct_cantpromo, 
+                          product.ct_cantliqui, 
+                          product.ct_cantprox,
+                          product.ct_cantcombo,
+                          product.ct_codigo,
+                          "",
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                          0,
+                      ],(tx, results) => {
+                            if (results.rowsAffected > 0) {
+                              insertedCount++;
+                              if (insertedCount === totalProducts) {
+                               // console.log("Todos los productos insertados para secuencia: " + secuencia);
+                                
+                                // Continúa con el siguiente grupo de datos
+                                  getProductosxcatalogos();
+                                  setPorcent(0.7);
+                                    console.log('Registro insertado correctamente.');
+                                
+                               }
+                                
+                            } else {
+                                console.log('No se insertó ningún registro.');
+                            }
+                        },
+                        (tx, error) => {
+                            console.log('Error al insertar el producto:', error.message); // Imprime el mensaje de error
+                        }
+                      );
+                  });
+              }, 
+              (tx, error) => {
+                  console.log('Error en transacción general:', error.message);
+              }, 
+              () => {
+                  console.log('Transacción completada con éxito.');
+              });}else{
+                getProductosxcatalogos();
+                setPorcent(0.7);
+                  console.log('Registro insertado correctamente.');
+              }
               })
-              getProductosxcatalogos();
-              console.log("termino el catalogo");
+              
               
             }
           
@@ -476,7 +462,10 @@ export default function CargarDatos(props) {
                 database_size,
             ); 
             
+            let totalClientes = myResponse?.clientes.length;
+            let insertedCount = 0;
             var cont = 0;
+
                db.transaction( (txn) => {
                 txn.executeSql("DROP TABLE IF EXISTS Cliente")
                  txn.executeSql(
@@ -486,28 +475,53 @@ export default function CargarDatos(props) {
                   + "cl_cliente VARCHAR(50), cl_telefono VARCHAR(50), cl_direccion VARCHAR(100), cl_correo VARCHAR(100));"
                   )
 
-                  myResponse?.clientes.map((value,index) => {
-                  
-                   txn.executeSql(
-                      'INSERT INTO Cliente VALUES (?, ?, ?, ?, ?, ?, ?)', [
-                        value.cl_codigo,
-                        value.cl_cedula,
-                        value.cl_tipoid,
-                        value.cl_cliente,
-                        value.cl_telefono,
-                        value.cl_direccion,
-                        value.cl_correo
-                    ],
-                      (txn, results) => {
-                        console.log('Clientes_afectados', results.rowsAffected);
-                        if (results.rowsAffected > 0) {
-                          cont++;
-                          console.log("Clientes_" + cont)
+                const clienteList = myResponse?.clientes;
+                console.log(clienteList);
+                  if(totalClientes>0){
+                db.transaction((tx) => {
+                  clienteList.forEach((product) => {
+                      tx.executeSql(
+                        'INSERT INTO Cliente VALUES (?, ?, ?, ?, ?, ?, ?)', [
+                          product.cl_codigo,
+                          product.cl_cedula,
+                          product.cl_tipoid,
+                          product.cl_cliente,
+                          product.cl_telefono,
+                          product.cl_direccion,
+                          product.cl_correo
+                      ],(tx, results) => {
+                            if (results.rowsAffected > 0) {
+                              insertedCount++;
+                              if (insertedCount === totalClientes) {
+                                  getCabeceras();
+                                  setPorcent(0.7);
+                                    console.log('Registro insertado correctamente.');
+                                
+                               }
+                                
+                            } else {
+                                console.log('No se insertó ningún registro.');
+                            }
+                        },
+                        (tx, error) => {
+                            console.log('Error al insertar el producto:', error.message); // Imprime el mensaje de error
                         }
-                      })
-                  })
+                      );
+                  });
+              }, 
+              (tx, error) => {
+                  console.log('Error en transacción general:', error.message);
+              }, 
+              () => {
+                  console.log('Transacción completada con éxito.');
+              }); }else{
+                getCabeceras();
+                setPorcent(0.7);
+                console.log('Registro insertado correctamente.');
+              }
+
+                
                 })
-                setActDB(actdb+1);
                 
                 console.log("termino los clientes");
                 
@@ -515,6 +529,310 @@ export default function CargarDatos(props) {
             
             
           }
+
+          getCabeceras = async () => {
+            try {
+              setLoading15(true)
+             
+              const response2 = await fetch(
+                "https://app.cotzul.com/Catalogo/php/conect/db_getCabeceras.php?idvendedor="+dataUser.us_idvendedor
+              );
+              console.log("https://app.cotzul.com/Catalogo/php/conect/db_getCabeceras.php?idvendedor="+dataUser.us_idvendedor);
+              const jsonResponse2 = await response2.json();
+              
+              saveCabeceras(jsonResponse2);
+              setLoading15(false)
+            } catch (error) {
+              setLoading15(false)
+              console.log("un error cachado cabeceras");
+              console.log(error);
+            }
+          }
+
+
+          saveCabeceras = async (myResponse) => {
+            if (loading15) {
+                settextIndicador("Registro de Cabeceras de Catalogo ... ");
+                
+                db = SQLite.openDatabase(
+                  database_name,
+                  database_version,
+                  database_displayname,
+                  database_size,
+              ); 
+
+            let totalCabecera = myResponse?.catprod.length;
+            let insertedCount = 0;
+              
+              var cont = 0;
+                db.transaction( (txn) => {
+                  txn.executeSql("DROP TABLE IF EXISTS Catcabprod")
+                   txn.executeSql(
+                    "CREATE TABLE IF NOT EXISTS "
+                    + "Catcabprod "
+                    + "(cd_codigo INTEGER, cd_cabecera VARCHAR(20), cd_show INTEGER);"
+                    )
+
+                   /* const catprodlist = myResponse?.catprod;
+                    console.log(catprodlist);
+
+                    db.transaction((tx) => {
+                      catprodlist.forEach((product) => {
+                          tx.executeSql(
+                            'INSERT INTO Catcabprod VALUES (?, ?, ?)', [
+                              value.codigo,
+                              value.cabecera,
+                              0
+                          ],(tx, results) => {
+                                if (results.rowsAffected > 0) {
+                                  insertedCount++;
+                                  if (insertedCount === totalCabecera) {
+                                      getCabeceras();
+                                      setPorcent(0.7);
+                                        console.log('Registro insertado correctamente.');
+                                    
+                                   }
+                                    
+                                } else {
+                                    console.log('No se insertó ningún registro.');
+                                }
+                            },
+                            (tx, error) => {
+                                console.log('Error al insertar el producto:', error.message); // Imprime el mensaje de error
+                            }
+                          );
+                      });
+                  }, 
+                  (tx, error) => {
+                      console.log('Error en transacción general:', error.message);
+                  }, 
+                  () => {
+                      console.log('Transacción completada con éxito.');
+                  });*/
+  
+                    myResponse?.catprod.map((value,index) => {
+                    
+                     txn.executeSql(
+                        'INSERT INTO Catcabprod VALUES (?, ?, ?)', [
+                          value.codigo,
+                          value.cabecera,
+                          0
+                      ],
+                        (txn, results) => {
+                          console.log('Cabecera_prod: ', results.rowsAffected);
+                          if (results.rowsAffected > 0) {
+                            cont++;
+                            console.log("Cabecera_prod_" + cont)
+                          }
+                        },
+                        (error) => {
+                          console.error('Insert Cabecera', error);
+                        })
+                    })
+
+
+                })
+
+                db.transaction( (txn) => {
+                  txn.executeSql("DROP TABLE IF EXISTS Catcabprom")
+                   txn.executeSql(
+                    "CREATE TABLE IF NOT EXISTS "
+                    + "Catcabprom "
+                    + "(cm_codigo INTEGER, cm_cabecera VARCHAR(20), cm_show INTEGER);"
+                    )
+
+
+  
+                    myResponse?.catpromo.map((value,index) => {
+                    
+                     txn.executeSql(
+                        'INSERT INTO Catcabprom VALUES (?, ?, ?)', [
+                          value.codigo,
+                          value.cabecera,
+                          0
+                      ],
+                        (txn, results) => {
+                          console.log('Cabecera_prom: ', results.rowsAffected);
+                          if (results.rowsAffected > 0) {
+                            cont++;
+                            console.log("Cabecera_prom_" + cont)
+                          }
+                        },
+                        (error) => {
+                          console.error('Insert Cabecera promo', error);
+                        })
+                    })
+                })
+
+                db.transaction( (txn) => {
+                  txn.executeSql("DROP TABLE IF EXISTS Catcabliqui")
+                   txn.executeSql(
+                    "CREATE TABLE IF NOT EXISTS "
+                    + "Catcabliqui "
+                    + "(cl_codigo INTEGER, cl_cabecera VARCHAR(20), cl_show INTEGER);"
+                    )
+  
+                    myResponse?.catliqui.map((value,index) => {
+                    
+                     txn.executeSql(
+                        'INSERT INTO Catcabliqui VALUES (?, ?, ?)', [
+                          value.codigo,
+                          value.cabecera,
+                          0
+                      ],
+                        (txn, results) => {
+                          console.log('Cabecera_liqui: ', results.rowsAffected);
+                          if (results.rowsAffected > 0) {
+                            cont++;
+                            console.log("Cabecera_liqui_" + cont)
+                          }
+                        },
+                        (error) => {
+                          console.error('Insert Cabecera liqui', error);
+                        })
+                    })
+                })
+
+                db.transaction( (txn) => {
+                  txn.executeSql("DROP TABLE IF EXISTS Catcabmerca")
+                   txn.executeSql(
+                    "CREATE TABLE IF NOT EXISTS "
+                    + "Catcabmerca "
+                    + "(ce_codigo INTEGER, ce_cabecera VARCHAR(20), ce_show INTEGER);"
+                    )
+  
+                    myResponse?.catmerca.map((value,index) => {
+                    
+                     txn.executeSql(
+                        'INSERT INTO Catcabmerca VALUES (?, ?, ?)', [
+                          value.codigo,
+                          value.cabecera,
+                          0
+                      ],
+                        (txn, results) => {
+                          console.log('Cabecera_merca: ', results.rowsAffected);
+                          if (results.rowsAffected > 0) {
+                            cont++;
+                            console.log("Cabecera_merca_" + cont)
+                          }
+                        },
+                        (error) => {
+                          console.error('Insert Cabecera merca', error);
+                        })
+                    })
+                })
+
+                db.transaction( (txn) => {
+                  txn.executeSql("DROP TABLE IF EXISTS ca_cabxcat")
+                   txn.executeSql(
+                    "CREATE TABLE IF NOT EXISTS "
+                    + "ca_cabxcat "
+                    + "(cx_codigo INTEGER PRIMARY KEY AUTOINCREMENT, cx_idcatalogo INTEGER, cx_tipo INTEGER, cx_cabecera INTEGER);"
+                    )
+                   
+
+                    if(myResponse?.datacatprod != null){
+                      cont = 0;
+                    myResponse?.datacatprod.map((value,index) => {
+                    
+                     txn.executeSql(
+                        'INSERT INTO ca_cabxcat(cx_idcatalogo, cx_tipo, cx_cabecera) VALUES (?, ?, ?)', [
+                          value.idcatalogo,
+                          value.tipo,
+                          value.cabecera
+                      ],
+                        (txn, results) => {
+                          console.log('Cabecera_cat: ', results.rowsAffected);
+                          if (results.rowsAffected > 0) {
+                            cont++;
+                            console.log("Cabecera_cat" + cont)
+                          }
+                        },
+                        (error) => {
+                          console.error('Insert Cabecera cat', error);
+                        })
+                    })
+                  }
+
+                  if(myResponse?.datacatpromo != null){
+
+                    cont = 0;
+                    
+                    myResponse?.datacatpromo.map((value,index) => {
+                      txn.executeSql(
+                         'INSERT INTO ca_cabxcat(cx_idcatalogo, cx_tipo, cx_cabecera) VALUES (?, ?, ?)', [
+                           value.idcatalogo,
+                           value.tipo,
+                           value.cabecera
+                       ],
+                         (txn, results) => {
+                           console.log('Cabecera_catpromo: ', results.rowsAffected);
+                           if (results.rowsAffected > 0) {
+                             cont++;
+                             console.log("Cabecera" + cont)
+                           }
+                         },
+                         (error) => {
+                           console.error('Insert Cabecera cab', error);
+                         })
+                     })
+                    }
+
+                    if(myResponse?.datacatliqui != null){
+                     cont = 0;
+
+                    myResponse?.datacatliqui.map((value,index) => {
+                    
+                      txn.executeSql(
+                         'INSERT INTO ca_cabxcat(cx_idcatalogo, cx_tipo, cx_cabecera) VALUES (?, ?, ?)', [
+                           value.idcatalogo,
+                           value.tipo,
+                           value.cabecera
+                       ],
+                         (txn, results) => {
+                           console.log('Cabecera_catliqui: ', results.rowsAffected);
+                           if (results.rowsAffected > 0) {
+                             cont++;
+                             console.log("Cabecera" + cont)
+                           }
+                         },
+                         (error) => {
+                           console.error('Insert Cabecera cab', error);
+                         })
+                     })
+                    }
+
+                    if(myResponse?.datacatmerca != null){
+                      cont = 0;
+                     myResponse?.datacatmerca.map((value,index) => {
+                    
+                      txn.executeSql(
+                         'INSERT INTO ca_cabxcat(cx_idcatalogo, cx_tipo, cx_cabecera) VALUES (?, ?, ?)', [
+                           value.idcatalogo,
+                           value.tipo,
+                           value.cabecera
+                       ],
+                         (txn, results) => {
+                           console.log('Cabecera_catmerca: ', results.rowsAffected);
+                           if (results.rowsAffected > 0) {
+                             cont++;
+                             console.log("Cabecera" + cont)
+                           }
+                         },
+                         (error) => {
+                           console.error('Insert Cabecera cab', error);
+                         })
+                     })}
+
+                    
+                })
+
+                setActDB(actdb+1);
+                  
+                }
+              
+              
+            }
 
 
 
@@ -529,6 +847,7 @@ export default function CargarDatos(props) {
               );
               const jsonResponse = await response.json();
               //console.log("My Catdetalle",jsonResponse);
+              setPorcent(0.9);
               saveProdCatalogo(jsonResponse);
               setLoading4(false)
             } catch (error) {
@@ -551,6 +870,8 @@ export default function CargarDatos(props) {
               ); 
               
               var cont = 0;
+              let totalProducts = myResponse?.Catproductos.length;
+              let insertedCount = 0;
               db.transaction( (txn) => {
                   txn.executeSql("DROP TABLE IF EXISTS Catproducto")
                   txn.executeSql(
@@ -558,7 +879,8 @@ export default function CargarDatos(props) {
                     + "Catproducto "
                     + "(cd_codigo INTEGER PRIMARY KEY AUTOINCREMENT, cd_idcatalogo INTEGER, cd_idoffline INTEGER, cd_idproducto INTEGER);"
                     )
-  
+                    
+                    if(totalProducts>0){
                     myResponse?.Catproductos.map((value,index) => {
                     
                     txn.executeSql(
@@ -571,58 +893,94 @@ export default function CargarDatos(props) {
                           console.log('CatProducto', results.rowsAffected);
                           if (results.rowsAffected > 0) {
                             cont++;
-                            console.log("Catproducto_" + cont)
+                            console.log("Catproducto_" + cont);
+                            insertedCount++;
+                            if (insertedCount === totalProducts) {
+                              setPorcent(1);
+                              updateCatProductos();
+                              console.log("termino los catalogos/productos");
                           }
+                          }
+                        },
+                        (error) => {
+                          console.error('Error en Catproducto_'+ error);
                         })
                     })
+                    }else{
+                      setPorcent(1);
+                      updateCatProductos();
+                      console.log("termino los catalogos/productos");
+                    }
                   })
                    
-                  updateCatProductos();
-                  console.log("termino los catalogos/productos");
+                  
                 }
             }
 
         
-            const updateCatProductos= async () => {
-          
+         
+            const updateCatProductos = async () => {
               db = SQLite.openDatabase(
-                database_name,
-                database_version,
-                database_displayname,
-                database_size,
-            );
-    
-            console.log("Estamos adentro de updateCatProductos");
-              db.transaction((tx) => {
-                tx.executeSql('SELECT a.ct_codigo as codigooff, a.ct_idcata as idcata FROM Catalogo a, Catproducto b WHERE a.ct_idcata = b.cd_idcatalogo', [], (tx, results) => {
-                  console.log("Query completed");
-                  var len = results.rows.length;
-                  console.log("cantidad de Combo: " + len);
-                  for (let i = 0; i < len; i++) {
-                    
-                    let row = results.rows.item(i);
-                    let codigooff = row.codigooff;
-                    console.log("valor off: "+codigooff)
-                    let idcata = row.idcata;
-                    tx.executeSql(
-                      'UPDATE Catproducto SET cd_idoffline = ? WHERE cd_idcatalogo = ?',
-                      [codigooff,idcata ],
-                      (tx, updateResult) => {
-                        // Maneja el resultado de la actualización si es necesario
-                        console.log("Actualización realizada con éxito Catalogo Productos");
+                  database_name,
+                  database_version,
+                  database_displayname,
+                  database_size,
+              );
+          
+              console.log("Estamos adentro de updateCatProductos");
+              let updatedCount = 0;  // Variable para contabilizar registros actualizados
+          
+              db.transaction((txn) => {
+                  txn.executeSql('SELECT a.ct_codigo as codigooff, a.ct_idcata as idcata FROM Catalogo a, Catproducto b WHERE a.ct_idcata = b.cd_idcatalogo', [], (txn, results) => {
+                      console.log("Query completed");
+                      var len = results.rows.length;
+                      console.log("cantidad de Combo: " + len);
+
+                      let updatedCount = 0;
+                      if(len > 0){
+                      for (let i = 0; i < len; i++) {
+                          let row = results.rows.item(i);
+                          let codigooff = row.codigooff;
+                          let idcata = row.idcata;
+
+                          console.log("Entro: "+codigooff+" idcata: "+idcata);
+                         
+          
+                          txn.executeSql(
+                              'UPDATE Catproducto SET cd_idoffline = ? WHERE cd_idcatalogo = ?',
+                              [codigooff, idcata],
+                              (tx, updateResult) => {
+                                console.log("si ejecuta la sentencia");
+                                  // Si la actualización fue exitosa, incrementa el contador
+                                  if (updateResult.rowsAffected > 0) {
+                                      console.log("actualizado registro: "+updatedCount);
+                                      updatedCount++;
+                                      if(len == updatedCount){
+                                        console.log("Actualización realizada con éxito para el Catálogo/Productos. Total actualizados: " + updatedCount);
+                                        setActDB(actdb + 1); 
+                                      }
+                                     
+                                  }
+                              },
+                              (tx, error) => {
+                                  console.error("Error al actualizar el Catálogo/Productos:", error);
+                              }
+                          );
                       }
-                    );
-                    
-                  }
-                  console.log("Cat productos registrada con éxito");
-                  setActDB(actdb+1);
-                },
-                (tx, error) => {
-                  // Manejar errores en la ejecución de la sentencia SQL
-                  console.error('Error en la sentencia SQL:', error);
-                });                                       
+                    }else{
+                      console.log("Actualización realizada con éxito para el Catálogo/Productos. Total actualizados: " + updatedCount);
+                      setActDB(actdb + 1); 
+                    }
+          
+                      console.log("Total de Cat productos actualizados con éxito: " + updatedCount);
+                       // Incrementa la variable actdb por el total de actualizaciones
+                  },
+                  (tx, error) => {
+                      console.error('Error en la sentencia SQL:', error);
+                  });
               });
-            }
+          }
+          
 
 
          
@@ -936,7 +1294,7 @@ export default function CargarDatos(props) {
                         value.sf_rutaimg,
                         value.sf_arrayimg
                     ],
-                      (txn, results) => {
+                    (txn, results) => {
                         console.log('ProdxLlegar', results.rowsAffected);
                         if (results.rowsAffected > 0) {
                           cont++;
@@ -1219,7 +1577,7 @@ export default function CargarDatos(props) {
                         0,
                         value.cp_idprox
                     ],
-                      (txn, results) => {
+                    (txn, results) => {
                         console.log('CatxLlegar', results.rowsAffected);
                         if (results.rowsAffected > 0) {
                           cont++;
@@ -1636,13 +1994,14 @@ if(catliqui == 1){
        
         <View style={styles.formContainer}>
             <Text style={styles.textTitulo}>Recopilando Datos</Text>
+            <ActivityIndicator style={styles.actInd} size="large" color="#0000ff" />
             <Image 
                 source={require("../../assets/img/logo_cotzul.jpeg")}
                 resizeMode = "contain"
                 style={styles.image}
             />
             
-            <ActivityIndicator style={styles.actInd} size="large" color="#0000ff" />
+            <Progress.Bar progress={porcent} width={300} />
             <Text style={styles.textInd}>{textIndicador}</Text>
         </View>
         </>
@@ -1664,7 +2023,7 @@ const styles = StyleSheet.create({
         height: 50,
         width: "50%",
         marginTop: 20, 
-        marginBottom: 10,
+        marginBottom: 20,
     },
     actInd:{
         marginTop: 50, 

@@ -16,7 +16,8 @@ export default function CatalogoStack(){
             <Stack.Screen 
             name="scatalogo"
             component={SCatalogo}
-            options={{title:"Catálogo seleccionado"}} />
+            options={{title:"Catálogo seleccionado",
+            }} />
             <Stack.Screen 
             name="producto"
             component={Producto}

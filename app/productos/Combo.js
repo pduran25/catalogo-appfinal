@@ -6,7 +6,7 @@ import * as SQLite from 'expo-sqlite';
 import utf8 from 'utf8'
 
 const screenWidth = Dimensions.get("window").width;
-const database_name = 'CotzulBD4.db';
+const database_name = 'CotzulBD6.db';
 const database_version = '1.0';
 const database_displayname = 'CotzulBD';
 const database_size = 200000;
