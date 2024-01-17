@@ -209,7 +209,7 @@ export default function Catalogo() {
 
     return (
 
-        <ScrollView style={styles.container} refreshControl={
+        <View style={styles.container} refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }>
              {/*<ActualizacionBolita actualizada={estaActualizada} />*/}
@@ -294,7 +294,7 @@ export default function Catalogo() {
 
             </View>
 
-        </ScrollView>
+        </View>
     );
 }
 

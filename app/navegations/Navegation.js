@@ -57,7 +57,7 @@ export default function Navigation(props){
             const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
             if(paso == 0){
                 if(jsonValue != null && chargue == 0){
-                    authContext.signIn();
+                    authContext.signUp();
                     console.log("se logoneo")
                 }else if(jsonValue != null && chargue == 1){
                     console.log("se cargo")

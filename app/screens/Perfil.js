@@ -167,7 +167,7 @@ export default function Perfil(){
     />):(<ModalConfirma openModal={openModal} ></ModalConfirma>)}
         
         {/**/}
-        <Text style={styles.txtusuario}>Version App: 1.0.4</Text>
+        <Text style={styles.txtusuario}>Version App: 1.0.6</Text>
     </View>
         
         </>
