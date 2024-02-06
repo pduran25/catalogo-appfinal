@@ -46,6 +46,8 @@ export default function  DataExtra(props) {
             database_displayname,
             database_size,
         ); 
+
+        if(texto.length >0){
    
         db.transaction((tx) => {
             tx.executeSql(
@@ -63,6 +65,7 @@ export default function  DataExtra(props) {
             );
     
         });
+    }
     };
 
 

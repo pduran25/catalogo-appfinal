@@ -1343,6 +1343,9 @@ db.transaction((tx) => {
                 database_size,
             );
 
+            let totalProducts = myResponse?.catapromo.length;
+            let insertedCount = 0;
+
             var cont = 0;
                db.transaction( (txn) => {
                 txn.executeSql("DROP TABLE IF EXISTS CatPromociones")
@@ -1364,12 +1367,16 @@ db.transaction((tx) => {
                         console.log('CatPromociones', results.rowsAffected);
                         if (results.rowsAffected > 0) {
                           cont++;
+                          insertedCount++;
+                          if(insertedCount == totalProducts){
+                            updateCatPromociones();
+                          }
                           console.log("CatPromociones_" + cont)
                         }
                       })
                   })
                 })
-                updateCatPromociones();
+                
                 console.log("termino los Catalogos de promociones");
             }
             

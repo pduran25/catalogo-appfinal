@@ -3,6 +3,7 @@ import {createStackNavigator} from "@react-navigation/stack";
 import Productos from "../screens/Productos";
 import Producto from "../productos/Producto";
 import Combo from "../productos/Combo";
+import { Itempromo } from "../productos/Itempromo";
 
 const Stack = createStackNavigator();
 export default function ProductosStack(){
@@ -20,6 +21,10 @@ export default function ProductosStack(){
             name="combo"
             component={Combo}
             options={{title:"Detalle Combo"}} />
+            <Stack.Screen 
+            name="promocional"
+            component={Itempromo}
+            options={{title:"Imagen Promocional"}} />
         </Stack.Navigator>
         
     );

@@ -178,6 +178,10 @@ export default function Producto(props) {
         
     }
 
+    const ImagenPromo = () => {
+        navigation.navigate("promocional"); 
+    }
+
 
 
     const state = {
@@ -226,6 +230,8 @@ export default function Producto(props) {
           ]
       }
 
+      
+
       const state5 = {
         tableHead: ['Desc.', 'Valor'],
         tableTitle: ['Precio Cred.', 'Seguro', 'Iva', 'Precio total'],
@@ -247,6 +253,8 @@ export default function Producto(props) {
             [Number.parseFloat(prod.pr_pvp + (prod.pr_pvp * 0.012) + (prod.pr_pvp * 0.12)).toFixed(2) ],                                    
           ]
       }
+
+      
     
     return (
 
@@ -277,19 +285,7 @@ export default function Producto(props) {
                 <Text style={styles.labelcorta}>Stock: {prod.pr_stock}</Text>
         </View>
         <View style={styles.descripcion}>
-        <Text style={styles.labelcorta}>Tipo Precio: {/*<RNPickerSelect
-                useNativeAndroidPickerStyle={false}
-                style={pickerStyle}
-                onValueChange={(tprecio) => setTprecio(tprecio)}
-                placeholder={{ label: "Seleccionar", value: 0 }}
-                items={[
-                    { label: "Subdistribuidor", value: 1 },
-                    { label: "Contado", value: 2 },
-                    { label: "Credito", value: 3 },
-                    { label: "Público", value: 4 },
-                    { label: "Personalizado", value: 6 }
-                ]}
-            />*/}</Text><Picker
+        <Text style={styles.labelcorta}>Tipo Precio: </Text><Picker
               onChanged={setTprecio}
               options={[
                 {value: 0, text: 'Selecccionar'},
@@ -318,15 +314,7 @@ export default function Producto(props) {
             }
              </View>
         
-             <Text style={styles.labelcorta}>Imagen a presentar: {/*<RNPickerSelect
-                useNativeAndroidPickerStyle={false}
-                style={pickerStyle}
-                onValueChange={(value) => setImg(value)}
-                placeholder={{ label: "Catalogo", value: 0 }}
-                items={[
-                    { label: "Personalizada", value: 1 }
-                ]}
-            />*/}</Text>
+             <Text style={styles.labelcorta}>Imagen a presentar: </Text>
             <Picker
               onChanged={setImg}
               options={[
@@ -429,6 +417,14 @@ export default function Producto(props) {
             buttonStyle = {styles.btnLogin}
             title='Cargar Imagen personalizada' 
             onPress={ ()=>openUrl("https://app.cotzul.com/Catalogo/cargarimagenpersonalizada.php?idvendedor="+dataUser.us_codigo+"&idproducto="+pr_codigo+"&seguro="+valcheck)} 
+            />
+        </View>
+        <View style={styles.styleboton1}>
+            <Button
+            containerStyle={styles.btnContainerLogin}
+            buttonStyle = {styles.btnLogin}
+            title='Imagen Promocional' 
+            onPress={ImagenPromo} 
             />
         </View>
     </ScrollView>
